@@ -1,0 +1,950 @@
+library(shiny)
+library(dplyr)
+library(ggplot2)
+library(readr)
+library(gridExtra)
+library(DT)
+library(tidyr)
+library(plotly)
+
+# Load Data for both apps
+combined_data <- read.csv("./data_folder/kir_1uM_final.csv", row.names = 2)
+mutant_wild_kinases <- combined_data %>%
+  select(-CAS, -SMILES, -cSMILES, -`Dose..µM.`)
+mutant_wild_kinases[is.na(mutant_wild_kinases)] <- 100
+column_choices <- sub("\\.", "(", colnames(mutant_wild_kinases))  # Replace the first dot with '(' due to R code problem where ( and ) becomes .
+column_choices <- gsub("\\.", ")", column_choices) # Replace the last dot with ')' due to R code problem where ( ) becomes .
+
+colnames(mutant_wild_kinases) <- column_choices
+gini_scores <- read.csv("./data_folder/gini_coefficients.csv", row.names = 1)
+
+
+all_kinases <- read.csv('./data_folder/all_kinases_all_lineages_zeroes.csv')
+new_data <- read.csv("./data_folder/kir_1uM_final.csv")
+new_wt_data <- new_data[, 1:(5 + 393)]
+new_wt_data[, 6:ncol(new_wt_data)] <- 100 - new_wt_data[, 6:ncol(new_wt_data)]
+wt_kinases <- colnames(new_wt_data)[6:ncol(new_wt_data)]
+
+# Function to calculate KISS score (from cancer_app2.R)
+calculate_KISS <- function(row, kinases) {
+  kinases <- kinases[kinases %in% wt_kinases]
+  if (length(kinases) == 0) return(NA)
+  
+  if (all(is.na(row[kinases]))) return(NA)
+  
+  if (length(row[kinases]) > 1) {
+    on_target <- exp(mean(log(row[kinases]), na.rm = TRUE))
+  } else {
+    on_target <- row[kinases]
+  }
+  
+  off_target_cols <- row[!names(row) %in% kinases]
+  IP_1 <- mean(off_target_cols, na.rm = TRUE)
+  sy2 <- var(off_target_cols, na.rm = TRUE)
+  sz2 <- var(row, na.rm = TRUE)
+  slo2 <- (max(off_target_cols, na.rm = TRUE)^2) / (2 * sum(!is.na(off_target_cols)))
+  
+  IP_2 <- (sy2 - slo2) / (sz2 - slo2)
+  IP <- (IP_1 + 100 * IP_2^5) / 2
+  KISS <- on_target - IP
+  return(KISS)
+}
+
+# Function for looking up kinases (from cancer_app2.R)
+lookup <- function(kinase) {
+    # If no kinase input, return NULL
+    if (is.null(kinase) || kinase == "") return(NULL)
+    
+    # Find the first partial match for the kinase
+    matched_kinase <- wt_kinases[grep(tolower(kinase), tolower(wt_kinases))][1]
+    
+    # If no match found, return NULL
+    if (is.na(matched_kinase)) {
+        return(NULL)
+    }
+    
+    # Create a dataframe with relevant columns (CAS, Compound, Dose, Kinase Inhibition)
+    df <- data.frame(
+        CAS = new_wt_data$CAS,
+        Compound = new_wt_data$Compound,
+        Dose = new_wt_data$`Dose..µM.`,  # Assuming correct format here
+        Kinase_Inhibition = new_wt_data[[matched_kinase]],
+        stringsAsFactors = FALSE
+    )
+    
+    # If all values in Kinase_Inhibition are NA, return NULL
+    if (all(is.na(df$Kinase_Inhibition))) return(NULL)
+    
+    # Calculate KISS score
+    df$KISS <- apply(new_wt_data[, 6:ncol(new_wt_data)], 1, function(row) {
+        score <- calculate_KISS(row, kinases = matched_kinase)
+        if (is.nan(score)) return(NA)
+        return(score)
+    })
+    
+    # Filter rows where Kinase_Inhibition and KISS are not NA
+    df <- df[!is.na(df$Kinase_Inhibition) & !is.na(df$KISS), ]
+    
+    # If the filtered dataframe is empty, return NULL
+    if (nrow(df) == 0) return(NULL)
+    
+    return(df)
+}
+
+# Function to generate radar plot
+radar_plot_for_kinases <- function(wild_df, kinase, input_kinase) {
+  num_drugs <- nrow(wild_df)
+  drug_names <- rownames(wild_df)
+  
+  angles <- seq(0, 2 * pi, length.out = num_drugs + 1)
+  
+  inhibition_levels <- c(25, 50, 75, 100)
+  
+  values <- 100 - wild_df[[kinase]]
+  values <- c(values, values[1])
+  
+  par(mar = rep(1, 4)) 
+  plot.new() 
+  plot.window(xlim = c(-1.1, 1.1), ylim = c(-1.1, 1.1), asp = 1)
+  
+  # Draw circular grid for inhibition levels
+  for (level in inhibition_levels) {
+    lines(cos(angles) * level / 100, sin(angles) * level / 100, lty = 2, col = 'darkgrey')
+    text(0, level / 100, paste0('≤ ', level, '% Inhibition'), col = 'darkgrey', cex = 1.2)
+  }
+  
+  # Draw radial lines for inhibition values with varying alpha and length
+  for (i in 1:num_drugs) {
+    # Adjust inhibition values to thresholds
+    if (values[i] <= 25) {
+        x_pos <- cos(angles[i]) * 0.25
+        y_pos <- sin(angles[i]) * 0.25
+        segments(0, 0, x_pos, y_pos, col = rgb(30, 144, 255, maxColorValue = 255), lwd = 0.5)  
+    } else if (values[i] <= 50) {
+        x_pos <- cos(angles[i]) * 0.5 
+        y_pos <- sin(angles[i]) * 0.5
+        segments(0, 0, x_pos, y_pos, col = rgb(30, 144, 255, maxColorValue = 255), lwd = 1) 
+    } else if (values[i] <= 75) {
+        x_pos <- cos(angles[i]) * 0.75 
+        y_pos <- sin(angles[i]) * 0.75
+        segments(0, 0, x_pos, y_pos, col = rgb(30, 144, 255, maxColorValue = 255), lwd = 1.5)  
+    } else {
+        x_pos <- cos(angles[i]) * 1 
+        y_pos <- sin(angles[i]) * 1
+        segments(0, 0, x_pos, y_pos, col = rgb(30, 144, 255, maxColorValue = 255), lwd = 4) 
+    }
+}
+  
+  # Add kinase name in the center
+  text(0, 0, labels = input_kinase, cex = 2.0, col = "black", font = 2)
+  
+  # Add drug labels for values with inhibition < 10
+  for (i in 1:num_drugs) {
+    if (wild_df[[kinase]][i] < 10) {
+      label_pos_x <- cos(angles[i]) * (values[i] / 100 + 0.15)
+      label_pos_y <- sin(angles[i]) * (values[i] / 100 + 0.15)
+      text(label_pos_x, label_pos_y, labels = drug_names[i], cex = 1.0, col = "black")
+    }
+  }
+}
+
+# UI for merged app
+ui <- fluidPage(
+  tags$div(
+    style = "display: flex; justify-content: space-between; align-items: center; width: 100%;",
+    
+    # Title (centered)
+    div(
+      titlePanel(div(HTML('<b><u>KIRHub: Kinase Inhibitor Repurposing Hub</u></b>'), style = "font-size: 42px; color: steelblue; text-align: center; width: 100%;"))
+    ),
+    
+    # Logo with link, positioned on the top-right and with space at the bottom
+    div(
+      tags$a(href = "https://research.fredhutch.org/gujral/en/wnt-signaling.html", target = "_blank",
+             tags$img(src = "logo.png", height = "80px", style = "position: absolute; right: 20px; top: 10px; margin-bottom: 20px;"))  # Added margin-bottom
+    )
+  ),
+  
+  tags$br(),
+  
+  sidebarLayout(
+    sidebarPanel(
+      h4(div(HTML('<b>Select an App to begin Kinase Analysis</b>'), style = "font-size: 25px; text-align: center; color: black;")),
+      
+      # Use divs with CSS styling to equally space out the buttons
+      div(style = "display: flex; justify-content: space-between;",
+          actionButton("mutation_button", "Kinases along with their Mutation Combinations and FDA Approved Drugs", 
+                       class = "btn btn-primary", 
+                       style = "width: 40%; font-size: 15px; text-decoration: underline; margin-right: 10px;"),
+          actionButton("wild_button", "Only Wild Type Kinases with Paralogs and their FDA Approved Drugs", 
+                       class = "btn btn-success", 
+                       style = "width: 40%; font-size: 15px; text-decoration: underline; margin-right: 10px;"),
+          actionButton("lineage_button", "Kinases in Cancer Lineages and their FDA Approved Drugs", 
+                       class = "btn btn-info", 
+                       style = "width: 40%; font-size: 15px; text-decoration: underline; margin-right: 0px;")
+      ),
+      width = 2.3
+    ),
+    
+    mainPanel(
+      uiOutput("app_ui"),
+      width = 15
+    )
+  )
+)
+
+# Server logic for merged app
+server <- function(input, output, session) {
+  
+  # Reactive values to keep track of which app is active
+  active_app <- reactiveVal("")
+  
+  # Observe when the Mutation Combinations button is clicked
+  observeEvent(input$mutation_button, {
+    active_app("mutation")
+  })
+
+  # Observe when the Wild Kinase button is clicked
+  observeEvent(input$wild_button, {
+    active_app("wild")
+  })
+  
+  # Observe when the Cancer Lineages button is clicked
+  observeEvent(input$lineage_button, {
+    active_app("lineage")
+  })
+  
+  # UI output for the selected app
+  output$app_ui <- renderUI({
+    if (active_app() == "mutation") {
+      
+      ### UI FROM mutations_app1.R (Mutation Combinations)
+      
+      fluidPage(
+        titlePanel(div(HTML('<b><u>Inhibition of Kinase Mutation(s) by FDA Approved Drugs</u></b>'), style = "font-size: 30px; text-align: center; color: steelblue;")),
+        
+        sidebarLayout(
+          sidebarPanel(
+            h4(div(HTML('<b>Step 1: Select First Kinase / Mutation</b>'), style = "font-size: 20px; text-align: center; color:steelblue")),
+            selectizeInput(
+              "first_mutation",
+              label = NULL,
+              choices = c("", colnames(mutant_wild_kinases)),
+              multiple = FALSE,
+              selected = "",
+              options = list(placeholder = 'Select kinase / mutation of interest...')
+            ),
+            
+            h4(div(HTML('<b>Step 2: Select Second Kinase / Mutation in Combination (Optional)</b>'), style = "font-size: 20px; text-align: center; color:steelblue")),
+            selectizeInput(
+              "second_mutation",
+              label = NULL,
+              choices = c("None", colnames(mutant_wild_kinases)),
+              multiple = FALSE,
+              selected = "None",
+              options = list(placeholder = 'Select kinase mutation in combination with above (optional)...')
+            ),
+            
+            tags$div(
+              style = "margin-top: 20px; padding: 10px; border: 1px solid #ddd; background-color: #f9f9f9;",
+              tags$h4(div(HTML('<b>User Instructions:</b>'), style = "text-align: center; color:steelblue; font-size: 20px;")),
+              tags$ol(
+                tags$li(div(HTML("<b> Select the kinase / mutation </b> for which you would like to see <b> FDA approved drug(s) </b> that inhibit it. For drug to inhibit a kinase the threshold was set to <b>80% or higher inhibition</b>")), style = "font-size: 15px;"),
+                HTML("<br>"),
+                tags$li(div(HTML("<b> Optionally select another mutation </b> for which you would like to see <b> FDA approved drug(s) </b> that inhibit the combination of mutations. <br>If none, leave it as <b>'None'</b>.")), style = "font-size: 15px;"),
+                tags$hr()
+              )
+            ),
+            width = 3
+          ),
+          
+          mainPanel(
+            tags$div(
+              h4(uiOutput("selected_mutations_text")),
+              style = "font-size: 16px; color: steelblue"
+            ),
+            
+            dataTableOutput("drug_table"),
+            
+            uiOutput("conditional_download_and_description"),
+            width = 9
+          )
+        )
+      )
+      
+      ### END OF UI FROM mutations_app1.R
+      
+    } else if (active_app() == "wild") {
+
+      ### UI FROM Wild Kinases Only  App with Paralogs
+
+        fluidPage(
+        titlePanel(div(HTML('<b><u>Inhibition of Wild Type Kinase(s) including Paralogs by FDA Approved Drugs</u></b>'), style = "font-size: 30px; text-align: center; color: steelblue;")),
+        
+        sidebarLayout(
+          sidebarPanel(
+            h4(div(HTML('<b>Step 1: Select First Kinase </b>'), style = "font-size: 20px; text-align: center; color:steelblue")),
+            selectizeInput(
+              "first_mutation",
+              label = NULL,
+              choices = c("", wt_kinases),
+              multiple = FALSE,
+              selected = "",
+              options = list(placeholder = 'Select kinase of interest...')
+            ),
+            
+            h4(div(HTML('<b>Step 2: Select Second Kinase / Paralog in Combination (Optional)</b>'), style = "font-size: 20px; text-align: center; color:steelblue")),
+            selectizeInput(
+              "second_mutation",
+              label = NULL,
+              choices = c("", wt_kinases),
+              multiple = FALSE,
+              selected = "None",
+              options = list(placeholder = 'Select kinase in combination with above (optional)...')
+            ),
+            
+            tags$div(
+              style = "margin-top: 20px; padding: 10px; border: 1px solid #ddd; background-color: #f9f9f9;",
+              tags$h4(div(HTML('<b>User Instructions:</b>'), style = "text-align: center; color:steelblue; font-size: 20px;")),
+              tags$ol(
+                tags$li(div(HTML("<b> Select the kinase </b> for which you would like to see <b> FDA approved drug(s) </b> that inhibit it. For drug to inhibit a kinase the threshold was set to <b>80% or higher inhibition</b>")), style = "font-size: 15px;"),
+                HTML("<br>"),
+                tags$li(div(HTML("<b> Optionally select another kinase or its paralog </b> for which you would like to see <b> FDA approved drug(s) </b> that inhibit the combination of kinases. <br>If none, leave it as <b>'None'</b>.")), style = "font-size: 15px;"),
+                tags$hr()
+              )
+            ),
+            width = 3
+          ),
+          
+          mainPanel(
+            tags$div(
+              h4(uiOutput("selected_wild_text")),
+              style = "font-size: 16px; color: steelblue"
+            ),
+            
+            dataTableOutput("drug_table"),
+            
+            uiOutput("conditional_download_and_des"),
+            width = 9
+          )
+        )
+      )
+
+      ### END of UI from wild kinases app.R
+
+    } else if (active_app() == "lineage") {
+      
+      ### UI FROM cancer_app2.R (Cancer Lineages)
+      
+      fluidPage(
+        titlePanel(div(HTML('<b><u>Kinase Importance in Cancer Lineage(s)</u></b>'), style = "font-size: 30px; text-align: center; color: steelblue;")),
+        
+        sidebarLayout(
+          sidebarPanel(
+            h4(div(HTML('<b>Step 1: Select a Kinase</b>'), style = "font-size: 20px; text-align: center; color: steelblue;")),
+            selectizeInput(
+              "kinase",
+              label = NULL,
+              choices = c("", colnames(all_kinases)[4:ncol(all_kinases)]),
+              multiple = FALSE,
+              selected = NULL,
+              options = list(placeholder = 'Select kinase of interest...')
+            ),
+            tags$div(
+              style = "margin-top: 20px; padding: 10px; border: 1px solid #ddd; background-color: #f9f9f9;",
+              tags$h4(div(HTML('<b>User Instructions:</b>'), style = "text-align: center; color: steelblue; font-size: 20px;")),
+              tags$ol(
+                tags$li(div(HTML("<b>Select the kinase</b> for which you would like to see the <b> important cancer lineages and sub-lineages </b>. Additionally the user can obtain a plot of the KISS Score vs. Inhibition for the kinase to see which <b> FDA Approved drugs </b> best target this kinase"), style = "font-size: 15px;")),
+                tags$br(),
+                tags$li(div(HTML("<b>Note: 'Important Kinase' is defined </b> as  a kinase that has a <b> gene effect score of less than -0.5</b> in a particular cancer lineage and its sub-lineages. These <b> gene effect scores data </b> is obtained from the <a href='https://depmap.org/portal/' target='_blank'>DepMap Portal website</a>."), style = "font-size: 15px;")),
+                tags$br(),
+                tags$hr()
+              )
+            ),
+            width = 3
+          ),
+          
+          mainPanel(
+            tags$div(
+              h4(uiOutput("selected_kinase_text")),
+              style = "font-size: 16px; color: steelblue"
+            ),
+            DTOutput("lineageTable"),
+            tags$br(),
+            conditionalPanel(
+              condition = "input.kinase != ''",
+              downloadButton("download_table", "Download Table (.csv)")
+            ),
+            tags$hr(),
+
+            # Radar plot UI (added)      
+            plotOutput("radarPlot", height = "600px"),  # Set radar plot height to 600px
+            tags$br(),
+            conditionalPanel(
+              condition = "input.kinase != ''",
+              downloadButton("downloadRadarPlot", "Download Radar Plot (.png)")
+            ),
+            tags$hr(),
+
+
+            # New KISS Score Plot Panel
+            plotOutput("kissPlot", height = "600px"),
+            tags$br(),
+            conditionalPanel(
+              condition = "input.kinase != '' && output.kissPlot !== null",
+              downloadButton("download_kiss_plot", "Download KISS Plot (.png)")
+            ),
+            tags$hr(),
+            
+            tags$br(), tags$br(),
+            plotOutput("barPlot", height = "600px"),
+            tags$br(),
+            conditionalPanel(
+              condition = "input.kinase != ''",
+              downloadButton("download_plot", "Download Plot (.png)")
+            ),
+            conditionalPanel(
+              condition = "input.kinase == ''"
+            ),
+            width = 9
+          )
+        )
+      )
+      
+      ### END OF UI FROM cancer_app2.R
+      
+    } else {
+      tagList(
+        tags$br(), tags$br(),
+        h4(div("Please select an app to begin.", style = "text-align: center; font-weight: bold; font-size: 18px;"))
+      )
+    }
+  })
+  
+  # Server logic for Mutation Combinations app (from mutations_app1.R)
+  observeEvent(active_app(), {
+    if (active_app() == "mutation") {
+      
+      ### SERVER LOGIC FROM mutations_app1.R
+      
+      # Reset the selectizeInput to start empty
+      observe({
+        if (is.null(input$first_mutation)) {
+          updateSelectizeInput(session, "first_mutation", selected = "")
+        }
+      })
+
+      observeEvent(input$first_mutation, {
+        # Get the current first mutation selection
+        selected_first_mutation <- input$first_mutation
+  
+        # Update the choices for the second mutation, excluding the selected first mutation
+        updateSelectizeInput(session, "second_mutation",
+                            choices = c("None", colnames(mutant_wild_kinases)[colnames(mutant_wild_kinases) != selected_first_mutation]),
+                            selected = "None")
+      })
+      
+      # Reactive data to handle the filtered table
+      filtered_data <- reactive({
+        selected_first_mutation <- input$first_mutation
+        selected_second_mutation <- input$second_mutation
+        
+        threshold <- 20
+        
+        if (!is.null(selected_first_mutation) && selected_first_mutation != "") {
+          first_mutation_columns <- selected_first_mutation
+          inhibiting_drugs_set <- rownames(mutant_wild_kinases)[apply(mutant_wild_kinases[, first_mutation_columns, drop = FALSE], 1, function(row) any(as.numeric(row) < threshold))]
+          
+          if (!is.null(selected_second_mutation) && selected_second_mutation != "" && selected_second_mutation != "None") {
+            second_mutation_columns <- selected_second_mutation
+            second_inhibiting_drugs <- rownames(mutant_wild_kinases)[apply(mutant_wild_kinases[, second_mutation_columns, drop = FALSE], 1, function(row) any(as.numeric(row) < threshold))]
+            
+            inhibiting_drugs_set <- intersect(inhibiting_drugs_set, second_inhibiting_drugs)
+          }
+          
+          unique_inhibiting_drugs <- unique(inhibiting_drugs_set)
+          gini_selected_drugs <- gini_scores[unique_inhibiting_drugs, "Gini", drop = FALSE]
+          
+          first_inhibition_col <- paste0("Inhibition (", selected_first_mutation, ") (%)")
+          second_inhibition_col <- paste0("Inhibition (", selected_second_mutation, ") (%)")
+          
+          if (!is.null(selected_second_mutation) && selected_second_mutation != "" && selected_second_mutation != "None") {
+            output_data <- data.frame(
+              "Inhibiting Drug(s)" = unique_inhibiting_drugs,
+              "Dose (um)" = rep("1.0", length(unique_inhibiting_drugs)),
+              first_inhibition_col = 100 - as.numeric(mutant_wild_kinases[unique_inhibiting_drugs, selected_first_mutation]),
+              second_inhibition_col = 100 - as.numeric(mutant_wild_kinases[unique_inhibiting_drugs, selected_second_mutation]),
+              "Drug Gini Score" = gini_selected_drugs$Gini,
+              row.names = NULL
+            )
+            
+            colnames(output_data)[1] <- "Inhibiting Drug(s)"
+            colnames(output_data)[2] <- "Dose (μm)"
+            colnames(output_data)[3] <- first_inhibition_col
+            colnames(output_data)[4] <- second_inhibition_col
+            colnames(output_data)[5] <- "Drug Gini Score"
+          } else {
+            output_data <- data.frame(
+              "Inhibiting Drug(s)" = unique_inhibiting_drugs,
+              "Dose (um)" = rep("1.0", length(unique_inhibiting_drugs)),
+              first_inhibition_col = 100 - as.numeric(mutant_wild_kinases[unique_inhibiting_drugs, selected_first_mutation]),
+              "Drug Gini Score" = gini_selected_drugs$Gini,
+              row.names = NULL
+            )
+            colnames(output_data)[1] <- "Inhibiting Drug(s)"
+            colnames(output_data)[2] <- "Dose (μm)"
+            colnames(output_data)[3] <- first_inhibition_col
+            colnames(output_data)[4] <- "Drug Gini Score"
+          }
+          
+          output_data <- output_data %>%
+            arrange(desc(!!sym(first_inhibition_col)))
+          
+          return(output_data)
+        } else {
+          return(NULL)
+        }
+      })
+      
+      # Render the table
+      output$drug_table <- renderDataTable({
+        filtered_data()
+      })
+      
+      # Conditional UI for download button and column descriptions
+      output$conditional_download_and_description <- renderUI({
+        if (!is.null(filtered_data()) && nrow(filtered_data()) > 0) {
+          tagList(
+            downloadButton("download_csv", "Download Table of Results (.csv)"),
+            tags$br(),
+            tags$hr(),
+            tags$div(
+              style = "margin-top: 20px;",
+              h4(HTML("<b>Column Descriptions</b>"), style = "color:steelblue; font-size: 20px;"),
+              tags$ul(
+                tags$li(HTML("<b>Inhibiting Drug(s):</b> The drug or compound used for inhibition."), style = "font-size: 15px;"),
+                tags$li(HTML("<b>Dose (μm):</b> The dose (in micromolar) of the compound used in the study."), style = "font-size: 15px;"),
+                tags$li(HTML("<b>Inhibition (kinase) (%):</b> The percentage inhibition of the selected kinase(s) by the drug."), style = "font-size: 15px;"),
+                tags$li(HTML("<b>Drug Gini Score:</b> A measure of selectivity for the drug. Higher values indicate greater selectivity."), style = "font-size: 15px;")
+              )
+            )
+          )
+        }
+      })
+      
+      # CSV Download
+      output$download_csv <- downloadHandler(
+        filename = function() {
+          all_mutations <- if (!is.null(input$second_mutation) && input$second_mutation != "None" && input$second_mutation != "") {
+            paste(input$first_mutation, input$second_mutation, sep = "_")
+          } else {
+            input$first_mutation
+          }
+          paste(all_mutations, "_", "results_", Sys.Date(), ".csv", sep = "")
+        },
+        content = function(file) {
+          write.csv(filtered_data(), file, row.names = FALSE)
+        }
+      )
+      
+      output$selected_mutations_text <- renderUI({
+        if (!is.null(input$first_mutation) && input$first_mutation != "") {
+          all_mutations <- if (!is.null(input$second_mutation) && input$second_mutation != "None" && input$second_mutation != "") {
+            c(input$first_mutation, input$second_mutation)
+          } else {
+            input$first_mutation
+          }
+          
+          HTML(paste('<b style="font-size: 16px;">Inhibiting Drug(s) for Selected Mutation(s):</b> ', 
+                     paste(all_mutations, collapse = " and "), 
+                     '<span style="font-size: 16px;"></span>'))
+        } else {
+          tagList(
+            HTML('<span style="font-size: 16px;">Select kinase(s) of interest</span>'),
+            tags$hr()
+          )
+        }
+      })
+      
+      ### END OF SERVER LOGIC FROM mutations_app1.R
+      
+    }
+  })
+
+  # Server logic for Wild Kinases app (from wild_kinases.R)
+  observeEvent(active_app(), {
+    if (active_app() == "wild") {
+      
+      ### SERVER LOGIC FROM wild_kinases.R
+      
+      # Reset the selectizeInput to start empty
+      observe({
+        if (is.null(input$first_mutation)) {
+          updateSelectizeInput(session, "first_mutation", selected = "")
+        }
+      })
+
+      observeEvent(input$first_mutation, {
+        selected_mutation <- input$first_mutation
+  
+        # Update the choices for the second mutation, excluding the selected first mutation
+        updateSelectizeInput(session, "second_mutation",
+                            choices = c("None", wt_kinases[wt_kinases != selected_mutation]),  # Exclude first mutation
+                            selected = "None")
+      })
+      
+      # Reactive data to handle the filtered table
+      filtered_data <- reactive({
+        selected_first_mutation <- input$first_mutation
+        selected_second_mutation <- input$second_mutation
+        
+        threshold <- 20
+        
+        if (!is.null(selected_first_mutation) && selected_first_mutation != "") {
+          first_mutation_columns <- selected_first_mutation
+          inhibiting_drugs_set <- rownames(mutant_wild_kinases)[apply(mutant_wild_kinases[, first_mutation_columns, drop = FALSE], 1, function(row) any(as.numeric(row) < threshold))]
+          
+          if (!is.null(selected_second_mutation) && selected_second_mutation != "" && selected_second_mutation != "None") {
+            second_mutation_columns <- selected_second_mutation
+            second_inhibiting_drugs <- rownames(mutant_wild_kinases)[apply(mutant_wild_kinases[, second_mutation_columns, drop = FALSE], 1, function(row) any(as.numeric(row) < threshold))]
+            
+            inhibiting_drugs_set <- intersect(inhibiting_drugs_set, second_inhibiting_drugs)
+          }
+          
+          unique_inhibiting_drugs <- unique(inhibiting_drugs_set)
+          gini_selected_drugs <- gini_scores[unique_inhibiting_drugs, "Gini", drop = FALSE]
+          
+          first_inhibition_col <- paste0("Inhibition (", selected_first_mutation, ") (%)")
+          second_inhibition_col <- paste0("Inhibition (", selected_second_mutation, ") (%)")
+          
+          if (!is.null(selected_second_mutation) && selected_second_mutation != "" && selected_second_mutation != "None") {
+            output_data <- data.frame(
+              "Inhibiting Drug(s)" = unique_inhibiting_drugs,
+              "Dose (um)" = rep("1.0", length(unique_inhibiting_drugs)),
+              first_inhibition_col = 100 - as.numeric(mutant_wild_kinases[unique_inhibiting_drugs, selected_first_mutation]),
+              second_inhibition_col = 100 - as.numeric(mutant_wild_kinases[unique_inhibiting_drugs, selected_second_mutation]),
+              "Drug Gini Score" = gini_selected_drugs$Gini,
+              row.names = NULL
+            )
+            
+            colnames(output_data)[1] <- "Inhibiting Drug(s)"
+            colnames(output_data)[2] <- "Dose (μm)"
+            colnames(output_data)[3] <- first_inhibition_col
+            colnames(output_data)[4] <- second_inhibition_col
+            colnames(output_data)[5] <- "Drug Gini Score"
+          } else {
+            output_data <- data.frame(
+              "Inhibiting Drug(s)" = unique_inhibiting_drugs,
+              "Dose (um)" = rep("1.0", length(unique_inhibiting_drugs)),
+              first_inhibition_col = 100 - as.numeric(mutant_wild_kinases[unique_inhibiting_drugs, selected_first_mutation]),
+              "Drug Gini Score" = gini_selected_drugs$Gini,
+              row.names = NULL
+            )
+            colnames(output_data)[1] <- "Inhibiting Drug(s)"
+            colnames(output_data)[2] <- "Dose (μm)"
+            colnames(output_data)[3] <- first_inhibition_col
+            colnames(output_data)[4] <- "Drug Gini Score"
+          }
+          
+          output_data <- output_data %>%
+            arrange(desc(!!sym(first_inhibition_col)))
+          
+          return(output_data)
+        } else {
+          return(NULL)
+        }
+      })
+      
+      # Render the table
+      output$drug_table <- renderDataTable({
+        filtered_data()
+      })
+      
+      # Conditional UI for download button and column descriptions
+      output$conditional_download_and_des <- renderUI({
+        if (!is.null(filtered_data()) && nrow(filtered_data()) > 0) {
+          tagList(
+            downloadButton("download_csv", "Download Table of Results (.csv)"),
+            tags$br(),
+            tags$hr(),
+            tags$div(
+              style = "margin-top: 20px;",
+              h4(HTML("<b>Column Descriptions</b>"), style = "color:steelblue; font-size: 20px;"),
+              tags$ul(
+                tags$li(HTML("<b>Inhibiting Drug(s):</b> The drug or compound used for inhibition."), style = "font-size: 15px;"),
+                tags$li(HTML("<b>Dose (μm):</b> The dose (in micromolar) of the compound used in the study."), style = "font-size: 15px;"),
+                tags$li(HTML("<b>Inhibition (kinase) (%):</b> The percentage inhibition of the selected kinase(s) by the drug."), style = "font-size: 15px;"),
+                tags$li(HTML("<b>Drug Gini Score:</b> A measure of selectivity for the drug. Higher values indicate greater selectivity."), style = "font-size: 15px;")
+              )
+            )
+          )
+        }
+      })
+      
+      # CSV Download
+      output$download_csv <- downloadHandler(
+        filename = function() {
+          all_mutations <- if (!is.null(input$second_mutation) && input$second_mutation != "None" && input$second_mutation != "") {
+            paste(input$first_mutation, input$second_mutation, sep = "_")
+          } else {
+            input$first_mutation
+          }
+          paste(all_mutations, "_", "results_", Sys.Date(), ".csv", sep = "")
+        },
+        content = function(file) {
+          write.csv(filtered_data(), file, row.names = FALSE)
+        }
+      )
+      
+      output$selected_wild_text <- renderUI({
+        if (!is.null(input$first_mutation) && input$first_mutation != "") {
+          all_mutations <- if (!is.null(input$second_mutation) && input$second_mutation != "None" && input$second_mutation != "") {
+            c(input$first_mutation, input$second_mutation)
+          } else {
+            input$first_mutation
+          }
+          
+          HTML(paste('<b style="font-size: 16px;">Inhibiting Drug(s) for Selected Kinase(s):</b> ', 
+                     paste(all_mutations, collapse = " and "), 
+                     '<span style="font-size: 16px;"></span>'))
+        } else {
+          tagList(
+            HTML('<span style="font-size: 16px;">Select kinase(s) of interest</span>'),
+            tags$hr()
+          )
+        }
+      })
+      
+      ### END OF SERVER LOGIC FROM wild_kinases.R
+      
+    }
+  })
+  
+  # Server logic for Cancer Lineages app (from cancer_app2.R)
+  observeEvent(active_app(), {
+    if (active_app() == "lineage") {
+      
+      ### SERVER LOGIC FROM cancer_app2.R
+      
+      filtered_data <- reactive({
+        if (input$kinase == "") return(NULL)
+        
+        total_counts_original <- all_kinases %>%
+          group_by(lineage_1, lineage_2, lineage_3) %>%
+          summarise(total_count = n()) %>%
+          ungroup()
+        
+        filtered_kinase_data <- all_kinases %>%
+          filter(all_kinases[[input$kinase]] != 0)
+        
+        lineage_summary_filtered <- filtered_kinase_data %>%
+          group_by(lineage_1, lineage_2, lineage_3) %>%
+          summarise(count = n()) %>%
+          ungroup()
+        
+        # Join the filtered summary with the total counts from the original data
+        lineage_summary <- lineage_summary_filtered %>%
+          left_join(total_counts_original, by = c("lineage_1", "lineage_2", "lineage_3")) %>%
+          mutate(percentage = (count / total_count) * 100) %>%
+          arrange(desc(percentage))
+        
+        return(lineage_summary)
+      })
+      
+      output$lineageTable <- renderDT({
+        data <- filtered_data()
+        if (is.null(data)) return(NULL)
+        
+        column_names <- c("Lineage 1", "Lineage 2", "Lineage 3", "Important Counts", "Total Counts", "Percentage of Important Counts (%)")
+        
+        datatable(data, colnames = column_names, options = list(pageLength = 15), rownames = FALSE) %>%
+          formatRound('percentage', 2) # percentage column to 2 decimal places
+      })
+
+      output$radarPlot <- renderPlot({
+        if (is.null(input$kinase) || input$kinase == "") return(NULL)
+        
+        # Find the first partial match for the kinase
+        matched_kinase <- colnames(mutant_wild_kinases)[grep(tolower(input$kinase), tolower(colnames(mutant_wild_kinases)))][1]
+        
+        # If no partial match is found, display the custom message
+        if (is.na(matched_kinase)) {
+          plot.new()
+          text(0.5, 0.5, paste("No FDA Drug Inhibition data available for", input$kinase, "kinase."), cex = 2, col = "red", font = 2)
+          return(NULL)
+        }
+        
+        # If a partial match is found, proceed with rendering the radar plot
+        radar_plot_for_kinases(mutant_wild_kinases, matched_kinase, input$kinase)
+      })
+    
+    output$downloadRadarPlot <- downloadHandler(
+      filename = function() {
+        paste(input$kinase, "_radar_plot.png", sep = "")
+      },
+      content = function(file) {
+        png(file)
+        radar_plot_for_kinases(mutant_wild_kinases, input$kinase)
+        dev.off()
+      }
+    )
+      
+      # New Plot for KISS Score vs Kinase Inhibition
+      kiss_data <- reactive({
+        if (input$kinase == "") return(NULL)
+        lookup(input$kinase)
+      })
+      
+      output$kissPlot <- renderPlot({
+        if (is.null(input$kinase) || input$kinase == "") return(NULL)
+        
+        data <- kiss_data()
+        if (is.null(data) || nrow(data) == 0) {
+          # If no data is found, display the custom message
+          plot.new()
+          text(0.5, 0.5, paste("No FDA drug Inhibition data available for", input$kinase, "kinase."), cex = 2, col = "red", font = 2)
+          return(NULL)
+        }
+        
+        ggplot(data, aes(x = Kinase_Inhibition, y = KISS)) +
+          geom_point(color = "navy", alpha = 1.0, size = 3) +
+          labs(
+            title = paste("KISS Score vs. Inhibition % for", input$kinase),
+            x = "Kinase Inhibition (%)",
+            y = "KISS Score"
+          ) +
+          theme_minimal() +
+          theme(
+            plot.title = element_text(size = 20, face = "bold", hjust = 0.5),
+            axis.title = element_text(size = 16),
+            axis.text = element_text(size = 14)
+          ) +
+          geom_text(
+            data = data %>% top_n(3, wt = KISS),
+            aes(label = Compound),
+            vjust = 0.3, hjust = -0.1, fontface = "bold", size = 6
+          ) +
+          scale_x_reverse()
+      })
+      
+      output$download_kiss_plot <- downloadHandler(
+        filename = function() {
+          paste(input$kinase, "_KISS_plot_", Sys.Date(), ".png", sep = "")
+        },
+        content = function(file) {
+          data <- kiss_data()
+          if (is.null(data)) return(NULL)
+          
+          p <- ggplot(data, aes(x = Kinase_Inhibition, y = KISS)) +
+            geom_point(color = "navy", alpha = 1.0) +
+            labs(
+              title = paste("KISS Score vs Inhibition % for", input$kinase),
+              x = "Kinase Inhibition (%)",
+              y = "KISS Score"
+            ) +
+            theme_minimal() +
+            theme(
+              plot.title = element_text(size = 20, face = "bold", hjust = 0.5),
+              axis.title = element_text(size = 16),
+              axis.text = element_text(size = 14)
+            ) +
+            geom_text(
+              data = data %>% top_n(3, wt = KISS),
+              aes(label = Compound),
+              vjust = -1, hjust = 0.5, fontface = "bold", size = 4
+            ) +
+            scale_x_reverse()
+          
+          ggsave(file, plot = p, device = "png")
+        }
+      )
+      
+      # Existing Bar Plot for Kinase Occurrences
+      output$barPlot <- renderPlot({
+        data <- filtered_data()
+        if (is.null(data)) return(NULL)
+        
+        lineage_counts <- data %>%
+          group_by(lineage_1) %>%
+          summarise(total_count = sum(count))
+        
+        ggplot(lineage_counts, aes(x = reorder(lineage_1, total_count), y = total_count)) +
+          geom_bar(stat = "identity", fill = "orangered") +
+          coord_flip() +
+          labs(
+            title = paste("Number of Occurrences of", input$kinase, "in Lineage(s) 1"),
+            x = "Lineage(s) 1",
+            y = "Number of Important Kinases"
+          ) +
+          theme_minimal() +
+          theme(
+            plot.title = element_text(size = 20, face = "bold", hjust = 0.5),  # Increase plot title size, make it bold, and center it
+            axis.title = element_text(size = 16),  # Increase size of axis labels
+            axis.text = element_text(size = 14)  # Increase size of axis ticks
+          )
+      })
+      
+      # Display selected kinase
+      output$selected_kinase_text <- renderUI({
+        if (!is.null(input$kinase) && input$kinase != "") {
+          HTML(paste('<b>Selected Kinase:</b> ', input$kinase, '<span style="font-size: 22px;"></span>'))
+        } else {
+          tagList(
+            HTML('<span style="font-size: 16px;">Select kinase of interest</span>'),
+            tags$hr()
+          )
+        }
+      })
+      
+      # Download table as CSV
+      output$download_table <- downloadHandler(
+        filename = function() {
+          paste(input$kinase, "_lineage_summary_", Sys.Date(), ".csv", sep = "")
+        },
+        content = function(file) {
+          data <- filtered_data()
+          write.csv(data, file, row.names = FALSE)
+        }
+      )
+      
+      # Download plot as PNG
+      output$download_plot <- downloadHandler(
+        filename = function() {
+          paste(input$kinase, "_bar_plot_", Sys.Date(), ".png", sep = "")
+        },
+        content = function(file) {
+          data <- filtered_data()
+          if (is.null(data)) return(NULL)
+          
+          # Create a bar plot for download
+          lineage_counts <- data %>%
+            group_by(lineage_1) %>%
+            summarise(total_count = sum(count))
+          
+          p <- ggplot(lineage_counts, aes(x = reorder(lineage_1, total_count), y = total_count)) +
+            geom_bar(stat = "identity", fill = "orangered") +
+            coord_flip() +
+            labs(
+              title = paste("Number of Occurrences of", input$kinase, "in Lineage(s) 1"),
+              x = "Lineage(s) 1",
+              y = "Total Occurrences"
+            ) +
+            theme_minimal() +
+            theme(
+              plot.title = element_text(size = 20, face = "bold", hjust = 0.5),  # Center plot title and make it bold
+              axis.title = element_text(size = 16),  # Increase axis label size
+              axis.text = element_text(size = 14)  # Increase axis tick size
+            )
+          
+          # Save plot to file
+          ggsave(file, plot = p, device = "png")
+        }
+      )
+      
+      ### END OF SERVER LOGIC FROM cancer_app2.R
+      
+    }
+  })
+}
+
+shinyApp(ui = ui, server = server, options = list(port = 786))
