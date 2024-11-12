@@ -150,12 +150,20 @@ radar_plot_for_kinases <- function(wild_df, kinase, input_kinase) {
 
 # UI for merged app
 ui <- fluidPage(
+  # Custom style to remove background and box shadow
+  tags$style(HTML("
+    .container-fluid {
+      background-color: transparent !important;
+      box-shadow: none !important;
+    }
+  ")),
+  
   tags$div(
     style = "display: flex; justify-content: space-between; align-items: center; width: 100%;",
     
     # Title (centered)
     div(
-      titlePanel(div(HTML('<b><u>KIRHub: Kinase Inhibitor Repurposing Hub</u></b>'), style = "font-size: 42px; color: steelblue; text-align: center; width: 100%;"))
+      titlePanel(div(HTML('<b>KIRHub: Kinase Inhibitor Repurposing Hub</b>'), style = "font-size: 42px; color: steelblue; text-align: center; width: 100%;"))
     ),
     
     # Logo with link, positioned on the top-right and with space at the bottom
@@ -166,6 +174,13 @@ ui <- fluidPage(
   ),
   
   tags$br(),
+  
+  tags$style(HTML("
+    .well {
+      background-color: transparent !important;
+      box-shadow: none !important;
+    }
+  ")),
   
   sidebarLayout(
     sidebarPanel(
@@ -216,16 +231,31 @@ server <- function(input, output, session) {
   
   # UI output for the selected app
   output$app_ui <- renderUI({
+    tags$head(
+      tags$style(HTML("
+      /* Set uniform font properties across the UI */
+      * {
+        font-family: Arial, sans-serif;
+        font-size: 16px;
+        color: #333;
+      }
+      /* Override specific text styles if needed */
+      h4, h3, .btn, .form-control, .dataTables_wrapper {
+        font-size: 20px;
+      }
+    "))
+    )
+    
     if (active_app() == "mutation") {
       
       ### UI FROM mutations_app1.R (Mutation Combinations)
       
       fluidPage(
-        titlePanel(div(HTML('<b><u>Inhibition of Kinase Mutation(s) by FDA Approved Drugs</u></b>'), style = "font-size: 30px; text-align: center; color: steelblue;")),
+        titlePanel(div(HTML('<b>Inhibition of Kinase Mutation(s) by FDA Approved Drugs</b>'), style = "font-size: 30px; text-align: center; color: steelblue;")),
         
         sidebarLayout(
           sidebarPanel(
-            h4(div(HTML('<b>Step 1: Select First Kinase / Mutation</b>'), style = "font-size: 20px; text-align: center; color:steelblue")),
+            h4(div(HTML('<b>Step 1: Select First Kinase / Mutation</b>'), style = "font-size: 20px; text-align: left; color:steelblue")),
             selectizeInput(
               "first_mutation",
               label = NULL,
@@ -235,7 +265,7 @@ server <- function(input, output, session) {
               options = list(placeholder = 'Select kinase / mutation of interest...')
             ),
             
-            h4(div(HTML('<b>Step 2: Select Second Kinase / Mutation in Combination (Optional)</b>'), style = "font-size: 20px; text-align: center; color:steelblue")),
+            h4(div(HTML('<b>Step 2: Select Second Kinase / Mutation in Combination (Optional)</b>'), style = "font-size: 20px; text-align: left; color:steelblue")),
             selectizeInput(
               "second_mutation",
               label = NULL,
@@ -246,12 +276,12 @@ server <- function(input, output, session) {
             ),
             
             tags$div(
-              style = "margin-top: 20px; padding: 10px; border: 1px solid #ddd; background-color: #f9f9f9;",
-              tags$h4(div(HTML('<b>User Instructions:</b>'), style = "text-align: center; color:steelblue; font-size: 20px;")),
+              style = "margin-top: 20px; padding: 10px; border: 1px solid #ddd; background-color: white;",
+              tags$h4(div(HTML('<b>User Instructions:</b>'), style = "text-align: left; color:steelblue; font-size: 20px;")),
               tags$ol(
-                tags$li(div(HTML("<b> Select the kinase / mutation </b> for which you would like to see <b> FDA approved drug(s) </b> that inhibit it. For drug to inhibit a kinase the threshold was set to <b>80% or higher inhibition</b>")), style = "font-size: 15px;"),
+                tags$li(div(HTML("<b> Select the kinase / mutation </b> for which you would like to see FDA approved drug(s) that inhibit it. For drug to inhibit a kinase the threshold was set to 80% or higher inhibition")), style = "font-size: 15px;"),
                 HTML("<br>"),
-                tags$li(div(HTML("<b> Optionally select another mutation </b> for which you would like to see <b> FDA approved drug(s) </b> that inhibit the combination of mutations. <br>If none, leave it as <b>'None'</b>.")), style = "font-size: 15px;"),
+                tags$li(div(HTML("<b> Optionally select another mutation </b> for which you would like to see FDA approved drug(s) that inhibit the combination of mutations. <br>If none, leave it as 'None'.")), style = "font-size: 15px;"),
                 tags$hr()
               )
             ),
@@ -279,11 +309,11 @@ server <- function(input, output, session) {
       ### UI FROM Wild Kinases Only  App with Paralogs
 
         fluidPage(
-        titlePanel(div(HTML('<b><u>Inhibition of Wild Type Kinase(s) including Paralogs by FDA Approved Drugs</u></b>'), style = "font-size: 30px; text-align: center; color: steelblue;")),
+        titlePanel(div(HTML('<b>Inhibition of Wild Type Kinase(s) including Paralogs by FDA Approved Drugs</b>'), style = "font-size: 30px; text-align: center; color: steelblue;")),
         
         sidebarLayout(
           sidebarPanel(
-            h4(div(HTML('<b>Step 1: Select First Kinase </b>'), style = "font-size: 20px; text-align: center; color:steelblue")),
+            h4(div(HTML('<b>Step 1: Select First Kinase </b>'), style = "font-size: 20px; text-align: left; color:steelblue")),
             selectizeInput(
               "first_mutation",
               label = NULL,
@@ -293,7 +323,7 @@ server <- function(input, output, session) {
               options = list(placeholder = 'Select kinase of interest...')
             ),
             
-            h4(div(HTML('<b>Step 2: Select Second Kinase / Paralog in Combination (Optional)</b>'), style = "font-size: 20px; text-align: center; color:steelblue")),
+            h4(div(HTML('<b>Step 2: Select Second Kinase / Paralog in Combination (Optional)</b>'), style = "font-size: 20px; text-align: left; color:steelblue")),
             selectizeInput(
               "second_mutation",
               label = NULL,
@@ -304,12 +334,12 @@ server <- function(input, output, session) {
             ),
             
             tags$div(
-              style = "margin-top: 20px; padding: 10px; border: 1px solid #ddd; background-color: #f9f9f9;",
-              tags$h4(div(HTML('<b>User Instructions:</b>'), style = "text-align: center; color:steelblue; font-size: 20px;")),
+              style = "margin-top: 20px; padding: 10px; border: 1px solid #ddd; background-color: white;",
+              tags$h4(div(HTML('<b>User Instructions:</b>'), style = "text-align: left; color:steelblue; font-size: 20px;")),
               tags$ol(
-                tags$li(div(HTML("<b> Select the kinase </b> for which you would like to see <b> FDA approved drug(s) </b> that inhibit it. For drug to inhibit a kinase the threshold was set to <b>80% or higher inhibition</b>")), style = "font-size: 15px;"),
+                tags$li(div(HTML("<b> Select the kinase </b> for which you would like to see FDA approved drug(s) that inhibit it. For drug to inhibit a kinase the threshold was set to 80% or higher inhibition.")), style = "font-size: 15px;"),
                 HTML("<br>"),
-                tags$li(div(HTML("<b> Optionally select another kinase or its paralog </b> for which you would like to see <b> FDA approved drug(s) </b> that inhibit the combination of kinases. <br>If none, leave it as <b>'None'</b>.")), style = "font-size: 15px;"),
+                tags$li(div(HTML("<b> Optionally select another kinase or its paralog </b> for which you would like to see FDA approved drug(s) that inhibit the combination of kinases. <br>If none, leave it as 'None'.")), style = "font-size: 15px;"),
                 tags$hr()
               )
             ),
@@ -337,11 +367,11 @@ server <- function(input, output, session) {
       ### UI FROM cancer_app2.R (Cancer Lineages)
       
       fluidPage(
-        titlePanel(div(HTML('<b><u>Kinase Importance in Cancer Lineage(s)</u></b>'), style = "font-size: 30px; text-align: center; color: steelblue;")),
+        titlePanel(div(HTML('<b>Kinase Importance in Cancer Lineage(s)</b>'), style = "font-size: 30px; text-align: center; color: steelblue;")),
         
         sidebarLayout(
           sidebarPanel(
-            h4(div(HTML('<b>Step 1: Select a Kinase</b>'), style = "font-size: 20px; text-align: center; color: steelblue;")),
+            h4(div(HTML('<b>Step 1: Select a Kinase</b>'), style = "font-size: 20px; text-align: left; color: steelblue;")),
             selectizeInput(
               "kinase",
               label = NULL,
@@ -351,12 +381,12 @@ server <- function(input, output, session) {
               options = list(placeholder = 'Select kinase of interest...')
             ),
             tags$div(
-              style = "margin-top: 20px; padding: 10px; border: 1px solid #ddd; background-color: #f9f9f9;",
-              tags$h4(div(HTML('<b>User Instructions:</b>'), style = "text-align: center; color: steelblue; font-size: 20px;")),
+              style = "margin-top: 20px; padding: 10px; border: 1px solid #ddd; background-color: white;",
+              tags$h4(div(HTML('<b>User Instructions:</b>'), style = "text-align: left; color: steelblue; font-size: 20px;")),
               tags$ol(
-                tags$li(div(HTML("<b>Select the kinase</b> for which you would like to see the <b> important cancer lineages and sub-lineages </b>. Additionally the user can obtain a plot of the KISS Score vs. Inhibition for the kinase to see which <b> FDA Approved drugs </b> best target this kinase"), style = "font-size: 15px;")),
+                tags$li(div(HTML("<b>Select the kinase</b> for which you would like to see the important cancer lineages and sub-lineages. Additionally the user can obtain a plot of the KISS Score vs. Inhibition for the kinase to see which FDA Approved drugs best target this kinase"), style = "font-size: 15px;")),
                 tags$br(),
-                tags$li(div(HTML("<b>Note: 'Important Kinase' is defined </b> as  a kinase that has a <b> gene effect score of less than -0.5</b> in a particular cancer lineage and its sub-lineages. These <b> gene effect scores data </b> is obtained from the <a href='https://depmap.org/portal/' target='_blank'>DepMap Portal website</a>."), style = "font-size: 15px;")),
+                tags$li(div(HTML("<b>Note: 'Important Kinase' is defined </b> as  a kinase that has a gene effect score of less than -0.5 in a particular cancer lineage and its sub-lineages. These gene effect scores data is obtained from the <a href='https://depmap.org/portal/' target='_blank'>DepMap Portal website</a>."), style = "font-size: 15px;")),
                 tags$br(),
                 tags$hr()
               )
@@ -373,7 +403,24 @@ server <- function(input, output, session) {
             tags$br(),
             conditionalPanel(
               condition = "input.kinase != ''",
-              downloadButton("download_table", "Download Table (.csv)")
+              downloadButton("download_table", "Download Table of Results (.csv)")
+            ),
+            tags$hr(),
+            
+            conditionalPanel(
+              condition = "input.kinase != ''",
+              tags$div(
+                style = "margin-top: 20px;",
+                h4(HTML("<b>Column Descriptions</b>"), style = "color: steelblue; font-size: 20px;"),
+                tags$ul(
+                  tags$li(HTML("<b>Lineage 1:</b> The primary cancer lineage the kinase is critical in."), style = "font-size: 15px;"),
+                  tags$li(HTML("<b>Lineage 2:</b> The sub lineage the kinase is critical in."), style = "font-size: 15px;"),
+                  tags$li(HTML("<b>Lineage 3:</b> The most specific sub lineage the kinase is critical in."), style = "font-size: 15px;"),
+                  tags$li(HTML("<b>Important Counts:</b> Number of cancer cell lines of the particular lineage, the kinase is critical in."), style = "font-size: 15px;"),
+                  tags$li(HTML("<b>Total Counts:</b> Total number of cancer cell lines where the kinase is observed in."), style = "font-size: 15px;"),
+                  tags$li(HTML("<b>Percentage of Important Counts:</b> Number of cancer cell lines where the kinase is critical / Total number of cancer cell lines where kinase is observed (%)"), style = "font-size: 15px;")
+                )
+              )
             ),
             tags$hr(),
 
@@ -413,12 +460,12 @@ server <- function(input, output, session) {
       
       ### END OF UI FROM cancer_app2.R
       
-    } else {
-      tagList(
-        tags$br(), tags$br(),
-        h4(div("Please select an app to begin.", style = "text-align: center; font-weight: bold; font-size: 18px;"))
-      )
-    }
+    } # else {
+    #   tagList(
+    #     tags$br(), tags$br(),
+    #     h4(div("Please select an app to begin.", style = "text-align: center; font-weight: bold; font-size: 18px;"))
+    #   )
+    # }
   })
   
   # Server logic for Mutation Combinations app (from mutations_app1.R)
