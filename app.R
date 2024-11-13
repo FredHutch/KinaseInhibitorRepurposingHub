@@ -7,6 +7,8 @@ library(DT)
 library(tidyr)
 library(plotly)
 
+addResourcePath("/assets", file.path(getwd(), "www"))
+
 # Load Data for both apps
 combined_data <- read.csv("./data_folder/kir_1uM_final.csv", row.names = 2)
 mutant_wild_kinases <- combined_data %>%
@@ -169,7 +171,7 @@ ui <- fluidPage(
     # Logo with link, positioned on the top-right and with space at the bottom
     div(
       tags$a(href = "https://research.fredhutch.org/gujral/en/wnt-signaling.html", target = "_blank",
-             tags$img(src = "logo.png", height = "80px", style = "position: absolute; right: 20px; top: 10px; margin-bottom: 20px;"))  # Added margin-bottom
+             tags$img(src = "assets/logo.png", height = "80px", style = "position: absolute; right: 20px; top: 10px; margin-bottom: 20px;"))  # Added margin-bottom
     )
   ),
   
@@ -994,4 +996,14 @@ server <- function(input, output, session) {
   })
 }
 
-shinyApp(ui = ui, server = server, options = list(port = 786))
+
+options <- list()
+if (!interactive()) {
+  options$port <- 3838
+  options$launch.browser <- FALSE
+  options$host <- "0.0.0.0"
+} else {
+  options$port <- 786
+}
+
+shinyApp(ui, server, options = options)
