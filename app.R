@@ -152,36 +152,13 @@ radar_plot_for_kinases <- function(wild_df, kinase, input_kinase) {
 
 # UI for merged app
 ui <- fluidPage(
-  # Ensure responsiveness with a meta tag
-  tags$head(
-    tags$meta(name = "viewport", content = "width=device-width, initial-scale=0.9, maximum-scale=0.9, user-scalable=no"),
-    tags$style(HTML("
-      .container-fluid {
-        background-color: transparent !important;
-        box-shadow: none !important;
-      }
-      
-      /* Make the app fully responsive */
-      body {
-        overflow-x: hidden;
-      }
-      
-      .sidebarPanel {
-        width: 90% !important;
-      }
-      
-      /* Custom button spacing */
-      .action-button {
-        margin: 3px 0;
-        text-align: center;
-      }
-      
-      /* Main content scaling */
-      .mainPanel {
-        max-width: 90%;
-      }
-    "))
-  ),
+  # Custom style to remove background and box shadow
+  tags$style(HTML("
+    .container-fluid {
+      background-color: transparent !important;
+      box-shadow: none !important;
+    }
+  ")),
   
   tags$div(
     style = "display: flex; justify-content: space-between; align-items: center; width: 100%;",
@@ -200,21 +177,28 @@ ui <- fluidPage(
   
   tags$br(),
   
+  tags$style(HTML("
+    .well {
+      background-color: transparent !important;
+      box-shadow: none !important;
+    }
+  ")),
+  
   sidebarLayout(
     sidebarPanel(
       h4(div(HTML('<b>Select an App to begin Kinase Analysis</b>'), style = "font-size: 25px; text-align: center; color: black;")),
       
       # Use divs with CSS styling to equally space out the buttons
-      div(style = "display: flex; flex-wrap: wrap; justify-content: space-between;",
+      div(style = "display: flex; justify-content: space-between;",
           actionButton("mutation_button", "Kinases along with their Mutation Combinations and FDA Approved Drugs", 
                        class = "btn btn-primary", 
-                       style = "flex: 1; margin: 5px; font-size: 15px; text-decoration: underline;"),
+                       style = "width: 40%; font-size: 15px; text-decoration: underline; margin-right: 10px;"),
           actionButton("wild_button", "Only Wild Type Kinases with Paralogs and their FDA Approved Drugs", 
                        class = "btn btn-success", 
-                       style = "flex: 1; margin: 5px; font-size: 15px; text-decoration: underline;"),
+                       style = "width: 40%; font-size: 15px; text-decoration: underline; margin-right: 10px;"),
           actionButton("lineage_button", "Kinases in Cancer Lineages and their FDA Approved Drugs", 
                        class = "btn btn-info", 
-                       style = "flex: 1; margin: 5px; font-size: 15px; text-decoration: underline;")
+                       style = "width: 40%; font-size: 15px; text-decoration: underline; margin-right: 0px;")
       ),
       width = 2.3
     ),
