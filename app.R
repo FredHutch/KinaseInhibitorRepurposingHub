@@ -192,13 +192,13 @@ ui <- fluidPage(
       div(style = "display: flex; justify-content: space-between;",
           actionButton("mutation_button", "Kinases along with their Mutation Combinations and FDA Approved Drugs", 
                        class = "btn btn-primary", 
-                       style = "width: 40%; font-size: 15px; text-decoration: underline; margin-right: 10px;"),
+                       style = "width: 33%; font-size: 12px; text-decoration: underline; margin-right: 10px;"),
           actionButton("wild_button", "Only Wild Type Kinases with Paralogs and their FDA Approved Drugs", 
                        class = "btn btn-success", 
-                       style = "width: 40%; font-size: 15px; text-decoration: underline; margin-right: 10px;"),
+                       style = "width: 33%; font-size: 12px; text-decoration: underline; margin-right: 10px;"),
           actionButton("lineage_button", "Kinases in Cancer Lineages and their FDA Approved Drugs", 
                        class = "btn btn-info", 
-                       style = "width: 40%; font-size: 15px; text-decoration: underline; margin-right: 0px;")
+                       style = "width: 33%; font-size: 12px; text-decoration: underline; margin-right: 0px;")
       ),
       width = 2.3
     ),
