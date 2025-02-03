@@ -604,7 +604,7 @@ server <- function(input, output, session) {
             input$first_mutation
           }
           
-          HTML(paste('<b style="font-size: 16px;">Inhibiting Drug(s) for Selected Mutation(s):</b> ', 
+          HTML(paste('<b style="font-size: 16px;">Kinase Inhibitors for Selected Mutation(s):</b> ', 
                      paste(all_mutations, collapse = " and "), 
                      '<span style="font-size: 16px;"></span>'))
         } else {
@@ -753,7 +753,7 @@ server <- function(input, output, session) {
             input$first_mutation
           }
           
-          HTML(paste('<b style="font-size: 16px;">Inhibiting Drug(s) for Selected Kinase(s):</b> ', 
+          HTML(paste('<b style="font-size: 16px;">Kinase Inhibitors for Selected Kinase(s):</b> ', 
                      paste(all_mutations, collapse = " and "), 
                      '<span style="font-size: 16px;"></span>'))
         } else {
