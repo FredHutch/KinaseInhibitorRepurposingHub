@@ -13,7 +13,7 @@ addResourcePath("/assets", file.path(getwd(), "www"))
 combined_data <- read.csv("./data_folder/kir_1uM_final.csv", row.names = 2)
 mutant_wild_kinases <- combined_data %>%
   select(-CAS, -SMILES, -cSMILES, -`Dose..µM.`)
-# mutant_wild_kinases[is.na(mutant_wild_kinases)] <- 100
+mutant_wild_kinases[is.na(mutant_wild_kinases)] <- 100
 column_choices <- sub("\\.", "(", colnames(mutant_wild_kinases))  # Replace the first dot with '(' due to R code problem where ( and ) becomes .
 column_choices <- gsub("\\.", ")", column_choices) # Replace the last dot with ')' due to R code problem where ( ) becomes .
 
