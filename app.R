@@ -171,7 +171,7 @@ ui <- fluidPage(
     
     # Logo with link, positioned on the top-right and with space at the bottom
     div(
-      tags$a(href = "https://research.fredhutch.org/gujral/en/wnt-signaling.html", target = "_blank",
+      tags$a(href = "https://research.fredhutch.org/gujral/en/lab-members.html", target = "_blank",
              tags$img(src = "assets/logo.png", height = "80px", style = "position: absolute; right: 20px; top: 10px; margin-bottom: 20px;"))  # Added margin-bottom
     )
   ),
