@@ -191,10 +191,10 @@ ui <- fluidPage(
       
       # Use divs with CSS styling to equally space out the buttons
       div(style = "display: flex; justify-content: space-between;",
-          actionButton("mutation_button", "Identifying Drug Candidates to Inhibit Mutant Kinase(s)", 
+          actionButton("mutation_button", "Identifying Drug(s) to Inhibit Mutant Kinase(s)", 
                        class = "btn btn-primary", 
                        style = "width: 33%; font-size: 12px; text-decoration: underline; margin-right: 10px;"),
-          actionButton("wild_button", "Identifying Drug Candidates to Inhibit Wild-Type Kinase(s)", 
+          actionButton("wild_button", "Identifying Drug(s) to Inhibit Wild-Type Kinase(s)", 
                        class = "btn btn-success", 
                        style = "width: 33%; font-size: 12px; text-decoration: underline; margin-right: 10px;"),
           actionButton("lineage_button", "Exploring Kinase Importance Across Cancer Lineages", 
@@ -254,7 +254,7 @@ server <- function(input, output, session) {
       ### UI FROM mutations_app1.R (Mutation Combinations)
       
       fluidPage(
-        titlePanel(div(HTML('<b>Identifying Drug Candidates to Inhibit Mutant Kinase(s)</b>'), style = "font-size: 30px; text-align: center; color: steelblue;")),
+        titlePanel(div(HTML('<b>Identifying Drug(s) to Inhibit Mutant Kinase(s)</b>'), style = "font-size: 30px; text-align: center; color: steelblue;")),
         
         sidebarLayout(
           sidebarPanel(
@@ -312,7 +312,7 @@ server <- function(input, output, session) {
       ### UI FROM Wild Kinases Only  App with Paralogs
 
         fluidPage(
-        titlePanel(div(HTML('<b>Identifying Drug Candidates to Inhibit Wild-Type Kinases</b>'), style = "font-size: 30px; text-align: center; color: steelblue;")),
+        titlePanel(div(HTML('<b>Identifying Drug(s) to Inhibit Wild-Type Kinases</b>'), style = "font-size: 30px; text-align: center; color: steelblue;")),
         
         sidebarLayout(
           sidebarPanel(
