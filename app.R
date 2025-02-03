@@ -26,6 +26,7 @@ new_data <- read.csv("./data_folder/kir_1uM_final.csv")
 new_wt_data <- new_data[, 1:(5 + 393)]
 new_wt_data[, 6:ncol(new_wt_data)] <- 100 - new_wt_data[, 6:ncol(new_wt_data)]
 wt_kinases <- colnames(new_wt_data)[6:ncol(new_wt_data)]
+mutant_kinases <- colnames(mutant_wild_kinases)[394:ncol(mutant_wild_kinases)]
 
 # Function to calculate KISS score (from cancer_app2.R)
 calculate_KISS <- function(row, kinases) {
@@ -261,7 +262,7 @@ server <- function(input, output, session) {
             selectizeInput(
               "first_mutation",
               label = NULL,
-              choices = c("", colnames(mutant_wild_kinases)),
+              choices = c("", mutant_kinases),
               multiple = FALSE,
               selected = "",
               options = list(placeholder = 'Select kinase / mutation of interest...')
@@ -271,7 +272,7 @@ server <- function(input, output, session) {
             selectizeInput(
               "second_mutation",
               label = NULL,
-              choices = c("None", colnames(mutant_wild_kinases)),
+              choices = c("", mutant_kinases),
               multiple = FALSE,
               selected = "None",
               options = list(placeholder = 'Select kinase mutation in combination with above (optional)...')
@@ -489,7 +490,7 @@ server <- function(input, output, session) {
   
         # Update the choices for the second mutation, excluding the selected first mutation
         updateSelectizeInput(session, "second_mutation",
-                            choices = c("None", colnames(mutant_wild_kinases)[colnames(mutant_wild_kinases) != selected_first_mutation]),
+                            choices = c("None", colnames(mutant_wild_kinases[mutant_kinases])[colnames(mutant_wild_kinases[mutant_kinases]) != selected_first_mutation]),
                             selected = "None")
       })
       
