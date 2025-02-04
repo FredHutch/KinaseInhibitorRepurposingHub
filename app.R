@@ -166,7 +166,7 @@ ui <- fluidPage(
     
     # Title (centered)
     div(
-      titlePanel(div(HTML('<b>KIRHub: Kinase Inhibitor Repurposing Hub</b>'), style = "font-size: 42px; color: steelblue; text-align: center; width: 100%;"))
+      titlePanel(div(HTML('<b>KIRHub: Kinase Inhibitor Repurposing Hub</b>'), style = "font-size: 52px; color: steelblue; text-align: center; width: 100%;"))
     ),
     
     # Logo with link, positioned on the top-right and with space at the bottom
@@ -187,20 +187,29 @@ ui <- fluidPage(
   
   sidebarLayout(
     sidebarPanel(
-      h4(div(HTML('<b>Select an App to begin Kinase Analysis</b>'), style = "font-size: 25px; text-align: center; color: black;")),
+      h4(div(HTML('<b>Select an App to begin Kinase Analysis</b>'), style = "font-size: 35px; text-align: center; color: black;")),
       
       # Use divs with CSS styling to equally space out the buttons
-      div(style = "display: flex; justify-content: space-between;",
-          actionButton("mutation_button", "Identifying Drug(s) to Inhibit Mutant Kinase(s)", 
+      div(style = "display: flex; justify-content: center; gap: 15px;",  # Adjusted spacing
+          actionButton("mutation_button", HTML("Identifying Drug Candidates <br> to Inhibit Mutant Kinase(s)"), 
                        class = "btn btn-primary", 
-                       style = "width: 33%; font-size: 12px; text-decoration: underline; margin-right: 10px;"),
-          actionButton("wild_button", "Identifying Drug(s) to Inhibit Wild-Type Kinase(s)", 
+                       style = "width: 620px; font-size: 35px; padding: 12px 18px; text-align: center; 
+                          text-decoration: underline; background-color: #337ab7; color: white; 
+                          border: 2px solid #337ab7; border-radius: 5px; white-space: normal;"),
+          
+          actionButton("wild_button", HTML("Identifying Drug Candidates <br> to Inhibit Wild-Type Kinase(s)"), 
                        class = "btn btn-success", 
-                       style = "width: 33%; font-size: 12px; text-decoration: underline; margin-right: 10px;"),
-          actionButton("lineage_button", "Exploring Kinase Importance Across Cancer Lineages", 
+                       style = "width: 620px; font-size: 35px; padding: 12px 18px; text-align: center; 
+                          text-decoration: underline; background-color: #5cb85c; color: white; 
+                          border: 2px solid #5cb85c; border-radius: 5px; white-space: normal;"),
+          
+          actionButton("lineage_button", HTML("Exploring Kinase Importance <br> Across Cancer Lineages"), 
                        class = "btn btn-info", 
-                       style = "width: 33%; font-size: 12px; text-decoration: underline; margin-right: 0px;")
-      ),
+                       style = "width: 620px; font-size: 35px; padding: 12px 18px; text-align: center; 
+                          text-decoration: underline; background-color: #5bc0de; color: white; 
+                          border: 2px solid #5bc0de; border-radius: 5px; white-space: normal;")
+      )
+      ,
       width = 2.3
     ),
     
