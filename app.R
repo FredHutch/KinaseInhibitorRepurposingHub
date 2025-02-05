@@ -23,10 +23,14 @@ gini_scores <- read.csv("./data_folder/gini_coefficients.csv", row.names = 1)
 
 all_kinases <- read.csv('./data_folder/all_kinases_all_lineages_zeroes.csv')
 new_data <- read.csv("./data_folder/kir_1uM_final.csv")
-new_wt_data <- new_data[, 1:(5 + 393)]
-new_wt_data[, 6:ncol(new_wt_data)] <- 100 - new_wt_data[, 6:ncol(new_wt_data)]
-wt_kinases <- colnames(new_wt_data)[6:ncol(new_wt_data)]
-mutant_kinases <- colnames(mutant_wild_kinases)[394:ncol(mutant_wild_kinases)]
+column_choices2 <- sub("\\.", "(", colnames(new_data))  # Replace the first dot with '(' due to R code problem where ( and ) becomes .
+column_choices2 <- gsub("\\.", ")", column_choices2) # Replace the last dot with ')' due to R code problem where ( ) becomes .
+
+colnames(new_data) <- column_choices2
+new_wt_data <- new_data[, 6:(5+409)]
+new_wt_data[, 1:ncol(new_wt_data)] <- 100 - new_wt_data[, 1:ncol(new_wt_data)]
+wt_kinases <- colnames(new_wt_data)[1:ncol(new_wt_data)]
+mutant_kinases <- colnames(mutant_wild_kinases)[410:ncol(mutant_wild_kinases)]
 
 # Function to calculate KISS score (from cancer_app2.R)
 calculate_KISS <- function(row, kinases) {
