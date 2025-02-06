@@ -29,7 +29,7 @@ column_choices2 <- gsub("\\.", ")", column_choices2) # Replace the last dot with
 colnames(new_data) <- column_choices2
 new_wt_data <- new_data[, 1:(5+409)]
 new_wt_data[, 6:ncol(new_wt_data)] <- 100 - new_wt_data[, 6:ncol(new_wt_data)]
-wt_kinases <- colnames(new_wt_data)[1:ncol(new_wt_data)]
+wt_kinases <- colnames(new_wt_data)[6:ncol(new_wt_data)]
 mutant_kinases <- colnames(mutant_wild_kinases)[410:ncol(mutant_wild_kinases)]
 
 # Function to calculate KISS score (from cancer_app2.R)
