@@ -27,8 +27,8 @@ column_choices2 <- sub("\\.", "(", colnames(new_data))  # Replace the first dot 
 column_choices2 <- gsub("\\.", ")", column_choices2) # Replace the last dot with ')' due to R code problem where ( ) becomes .
 
 colnames(new_data) <- column_choices2
-new_wt_data <- new_data[, 6:(5+409)]
-new_wt_data[, 1:ncol(new_wt_data)] <- 100 - new_wt_data[, 1:ncol(new_wt_data)]
+new_wt_data <- new_data[, 1:(5+409)]
+new_wt_data[, 6:ncol(new_wt_data)] <- 100 - new_wt_data[, 6:ncol(new_wt_data)]
 wt_kinases <- colnames(new_wt_data)[1:ncol(new_wt_data)]
 mutant_kinases <- colnames(mutant_wild_kinases)[410:ncol(mutant_wild_kinases)]
 
@@ -74,7 +74,7 @@ lookup <- function(kinase) {
     df <- data.frame(
         CAS = new_wt_data$CAS,
         Compound = new_wt_data$Compound,
-        Dose = new_wt_data$`Dose..µM.`,  # Assuming correct format here
+        Dose = new_wt_data$`Dose()µM)`,  # Assuming correct format here
         Kinase_Inhibition = new_wt_data[[matched_kinase]],
         stringsAsFactors = FALSE
     )
