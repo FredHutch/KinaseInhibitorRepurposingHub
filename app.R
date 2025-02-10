@@ -313,6 +313,27 @@ server <- function(input, output, session) {
             dataTableOutput("drug_table"),
             
             uiOutput("conditional_download_and_description"),
+            
+            tags$hr(),  # Horizontal line separator
+            tags$br(), tags$br(),
+            
+            # Radar plot UI - Shows 1 or 2 radar plots based on selected kinases
+            conditionalPanel(
+              condition = "input.first_mutation != ''",
+              plotOutput("radarPlot1", height = "600px"),
+              tags$br(),
+              downloadButton("downloadRadarPlot1", "Download Radar Plot 1 (.png)"),
+              tags$hr()
+            ),
+            
+            conditionalPanel(
+              condition = "input.second_mutation != '' && input.second_mutation != 'None'",
+              plotOutput("radarPlot2", height = "600px"),
+              tags$br(),
+              downloadButton("downloadRadarPlot2", "Download Radar Plot 2 (.png)"),
+              tags$hr()
+            ),
+            
             width = 9
           )
         )
@@ -701,6 +722,53 @@ server <- function(input, output, session) {
           )
         }
       })
+      
+      # Radar Plot Rendering (1 or 2 plots)
+      output$radarPlot1 <- renderPlot({
+        if (is.null(input$first_mutation) || input$first_mutation == "") return(NULL)
+        
+        title_text <- paste("Radar Plot for", input$first_mutation)  # Set title dynamically
+        
+        # Render Radar Plot with Title
+        par(mar = c(3, 3, 3, 3))  # Adjust margins for title
+        plot.new()
+        title(main = title_text, col.main = "navy", font.main = 2, cex.main = 1.8)  # Set title properties
+        
+        radar_plot_for_kinases(mutant_wild_kinases, input$first_mutation, input$first_mutation)
+      })
+      
+      output$radarPlot2 <- renderPlot({
+        if (is.null(input$second_mutation) || input$second_mutation == "None") return(NULL)
+        
+        title_text <- paste("Radar Plot for", input$second_mutation)  # Set title dynamically
+        
+        # Render Radar Plot with Title
+        par(mar = c(3, 3, 3, 3))  # Adjust margins for title
+        plot.new()
+        title(main = title_text, col.main = "navy", font.main = 2, cex.main = 1.8)  # Set title properties
+        
+        radar_plot_for_kinases(mutant_wild_kinases, input$second_mutation, input$second_mutation)
+      })
+      
+      # Download Radar Plots
+      output$downloadRadarPlot1 <- downloadHandler(
+        filename = function() { paste(input$first_mutation, "_radar_plot.png", sep = "") },
+        content = function(file) {
+          png(file, width = 800, height = 800, res = 150)
+          radar_plot_for_kinases(mutant_wild_kinases, input$first_mutation, input$first_mutation)
+          dev.off()
+        }
+      )
+      
+      output$downloadRadarPlot2 <- downloadHandler(
+        filename = function() { paste(input$second_mutation, "_radar_plot.png", sep = "") },
+        content = function(file) {
+          if (is.null(input$second_mutation) || input$second_mutation == "None") return(NULL)
+          png(file, width = 800, height = 800, res = 150)
+          radar_plot_for_kinases(mutant_wild_kinases, input$second_mutation, input$second_mutation)
+          dev.off()
+        }
+      )
       
       ### END OF SERVER LOGIC FROM mutations_app1.R
       
