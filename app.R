@@ -512,16 +512,51 @@ server <- function(input, output, session) {
         selected_first_mutation <- input$first_mutation
         selected_second_mutation <- input$second_mutation
         
-        threshold <- 80
+        # threshold <- 80  # Previously used inhibition threshold
         
         if (!is.null(selected_first_mutation) && selected_first_mutation != "") {
           first_mutation_columns <- selected_first_mutation
-          inhibiting_drugs_set <- rownames(mutant_wild_kinases)[apply(mutant_wild_kinases[, first_mutation_columns, drop = FALSE], 1, function(row) any(as.numeric(row) < threshold))]
           
+          # Get inhibition values for all drugs targeting the selected kinase
+          drug_inhibition_values <- mutant_wild_kinases[, first_mutation_columns, drop = FALSE]
+          
+          # Convert to a data frame and retain row names (drug names)
+          drug_inhibition_df <- data.frame(
+            Kinase_Inhibitor = rownames(drug_inhibition_values),
+            Inhibition = 100 - as.numeric(drug_inhibition_values[, first_mutation_columns]),
+            stringsAsFactors = FALSE
+          )
+          
+          # Remove NAs and select the top 10 drugs based on inhibition (sorted in descending order)
+          drug_inhibition_df <- drug_inhibition_df[!is.na(drug_inhibition_df$Inhibition), ]
+          drug_inhibition_df <- drug_inhibition_df[order(-drug_inhibition_df$Inhibition), ]
+          top_10_drugs <- head(drug_inhibition_df, 10)
+          
+          inhibiting_drugs_set <- top_10_drugs$Kinase_Inhibitor
+          
+          # --- Old threshold-based logic (commented out) ---
+          # inhibiting_drugs_set <- rownames(mutant_wild_kinases)[apply(mutant_wild_kinases[, first_mutation_columns, drop = FALSE], 1, function(row) any(as.numeric(row) < threshold))]
+          
+          # If a second mutation is selected, find the common inhibitors for both
           if (!is.null(selected_second_mutation) && selected_second_mutation != "" && selected_second_mutation != "None") {
             second_mutation_columns <- selected_second_mutation
-            second_inhibiting_drugs <- rownames(mutant_wild_kinases)[apply(mutant_wild_kinases[, second_mutation_columns, drop = FALSE], 1, function(row) any(as.numeric(row) < threshold))]
             
+            # Get inhibition values for second mutation
+            second_drug_inhibition_values <- mutant_wild_kinases[, second_mutation_columns, drop = FALSE]
+            
+            second_drug_inhibition_df <- data.frame(
+              Kinase_Inhibitor = rownames(second_drug_inhibition_values),
+              Inhibition = 100 - as.numeric(second_drug_inhibition_values[, second_mutation_columns]),
+              stringsAsFactors = FALSE
+            )
+            
+            second_drug_inhibition_df <- second_drug_inhibition_df[!is.na(second_drug_inhibition_df$Inhibition), ]
+            second_drug_inhibition_df <- second_drug_inhibition_df[order(-second_drug_inhibition_df$Inhibition), ]
+            top_10_second_drugs <- head(second_drug_inhibition_df, 10)
+            
+            second_inhibiting_drugs <- top_10_second_drugs$Kinase_Inhibitor
+            
+            # Find drugs common to both kinase inhibition lists
             inhibiting_drugs_set <- intersect(inhibiting_drugs_set, second_inhibiting_drugs)
           }
           
@@ -661,16 +696,51 @@ server <- function(input, output, session) {
         selected_first_mutation <- input$first_mutation
         selected_second_mutation <- input$second_mutation
         
-        threshold <- 80
+        # threshold <- 80  # Previously used inhibition threshold
         
         if (!is.null(selected_first_mutation) && selected_first_mutation != "") {
           first_mutation_columns <- selected_first_mutation
-          inhibiting_drugs_set <- rownames(mutant_wild_kinases)[apply(mutant_wild_kinases[, first_mutation_columns, drop = FALSE], 1, function(row) any(as.numeric(row) < threshold))]
           
+          # Get inhibition values for all drugs targeting the selected kinase
+          drug_inhibition_values <- mutant_wild_kinases[, first_mutation_columns, drop = FALSE]
+          
+          # Convert to a data frame and retain row names (drug names)
+          drug_inhibition_df <- data.frame(
+            Kinase_Inhibitor = rownames(drug_inhibition_values),
+            Inhibition = 100 - as.numeric(drug_inhibition_values[, first_mutation_columns]),
+            stringsAsFactors = FALSE
+          )
+          
+          # Remove NAs and select the top 10 drugs based on inhibition (sorted in descending order)
+          drug_inhibition_df <- drug_inhibition_df[!is.na(drug_inhibition_df$Inhibition), ]
+          drug_inhibition_df <- drug_inhibition_df[order(-drug_inhibition_df$Inhibition), ]
+          top_10_drugs <- head(drug_inhibition_df, 10)
+          
+          inhibiting_drugs_set <- top_10_drugs$Kinase_Inhibitor
+          
+          # --- Old threshold-based logic (commented out) ---
+          # inhibiting_drugs_set <- rownames(mutant_wild_kinases)[apply(mutant_wild_kinases[, first_mutation_columns, drop = FALSE], 1, function(row) any(as.numeric(row) < threshold))]
+          
+          # If a second kinase is selected, find the common inhibitors for both
           if (!is.null(selected_second_mutation) && selected_second_mutation != "" && selected_second_mutation != "None") {
             second_mutation_columns <- selected_second_mutation
-            second_inhibiting_drugs <- rownames(mutant_wild_kinases)[apply(mutant_wild_kinases[, second_mutation_columns, drop = FALSE], 1, function(row) any(as.numeric(row) < threshold))]
             
+            # Get inhibition values for second kinase
+            second_drug_inhibition_values <- mutant_wild_kinases[, second_mutation_columns, drop = FALSE]
+            
+            second_drug_inhibition_df <- data.frame(
+              Kinase_Inhibitor = rownames(second_drug_inhibition_values),
+              Inhibition = 100 - as.numeric(second_drug_inhibition_values[, second_mutation_columns]),
+              stringsAsFactors = FALSE
+            )
+            
+            second_drug_inhibition_df <- second_drug_inhibition_df[!is.na(second_drug_inhibition_df$Inhibition), ]
+            second_drug_inhibition_df <- second_drug_inhibition_df[order(-second_drug_inhibition_df$Inhibition), ]
+            top_10_second_drugs <- head(second_drug_inhibition_df, 10)
+            
+            second_inhibiting_drugs <- top_10_second_drugs$Kinase_Inhibitor
+            
+            # Find drugs common to both kinase inhibition lists
             inhibiting_drugs_set <- intersect(inhibiting_drugs_set, second_inhibiting_drugs)
           }
           
