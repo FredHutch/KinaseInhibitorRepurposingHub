@@ -512,7 +512,7 @@ server <- function(input, output, session) {
         selected_first_mutation <- input$first_mutation
         selected_second_mutation <- input$second_mutation
         
-        threshold <- 60
+        threshold <- 80
         
         if (!is.null(selected_first_mutation) && selected_first_mutation != "") {
           first_mutation_columns <- selected_first_mutation
@@ -661,7 +661,7 @@ server <- function(input, output, session) {
         selected_first_mutation <- input$first_mutation
         selected_second_mutation <- input$second_mutation
         
-        threshold <- 60
+        threshold <- 80
         
         if (!is.null(selected_first_mutation) && selected_first_mutation != "") {
           first_mutation_columns <- selected_first_mutation
