@@ -322,7 +322,7 @@ server <- function(input, output, session) {
       
     } else if (active_app() == "wild") {
       
-      ### UI FROM Wild Kinases Only  App with Paralogs
+      ### UI FROM Wild Kinases Only App with Paralogs
       
       fluidPage(
         titlePanel(div(HTML('<b>Identifying Drug(s) to Inhibit Wild-Type Kinases</b>'), style = "font-size: 30px; text-align: center; color: steelblue;")),
@@ -371,6 +371,44 @@ server <- function(input, output, session) {
             dataTableOutput("drug_table"),
             
             uiOutput("conditional_download_and_des"),
+            
+            tags$hr(),  # Horizontal line separator
+            tags$br(), tags$br(),
+            
+            # Radar plot UI - Shows 1 or 2 radar plots based on selected kinases
+            conditionalPanel(
+              condition = "input.first_mutation != ''",
+              plotOutput("radarPlot1", height = "600px"),
+              tags$br(),
+              downloadButton("downloadRadarPlot1", "Download Radar Plot 1 (.png)"),
+              tags$hr()
+            ),
+            
+            conditionalPanel(
+              condition = "input.second_mutation != '' && input.second_mutation != 'None'",
+              plotOutput("radarPlot2", height = "600px"),
+              tags$br(),
+              downloadButton("downloadRadarPlot2", "Download Radar Plot 2 (.png)"),
+              tags$hr()
+            ),
+            
+            # KISS Score Scatter Plots - Shows 1 or 2 plots based on selected kinases
+            conditionalPanel(
+              condition = "input.first_mutation != ''",
+              plotOutput("kissPlot1", height = "600px"),
+              tags$br(),
+              downloadButton("downloadKissPlot1", "Download KISS Plot 1 (.png)"),
+              tags$hr()
+            ),
+            
+            conditionalPanel(
+              condition = "input.second_mutation != '' && input.second_mutation != 'None'",
+              plotOutput("kissPlot2", height = "600px"),
+              tags$br(),
+              downloadButton("downloadKissPlot2", "Download KISS Plot 2 (.png)"),
+              tags$hr()
+            ),
+            
             width = 9
           )
         )
@@ -440,24 +478,24 @@ server <- function(input, output, session) {
             ),
             tags$hr(),
             
-            # Radar plot UI (added)      
-            plotOutput("radarPlot", height = "600px"),  # Set radar plot height to 600px
-            tags$br(),
-            conditionalPanel(
-              condition = "input.kinase != ''",
-              downloadButton("downloadRadarPlot", "Download Radar Plot (.png)")
-            ),
-            tags$hr(),
-            
-            
-            # New KISS Score Plot Panel
-            plotOutput("kissPlot", height = "600px"),
-            tags$br(),
-            conditionalPanel(
-              condition = "input.kinase != '' && output.kissPlot !== null",
-              downloadButton("download_kiss_plot", "Download KISS Plot (.png)")
-            ),
-            tags$hr(),
+            # # Radar plot UI (added)      
+            # plotOutput("radarPlot", height = "600px"),  # Set radar plot height to 600px
+            # tags$br(),
+            # conditionalPanel(
+            #   condition = "input.kinase != ''",
+            #   downloadButton("downloadRadarPlot", "Download Radar Plot (.png)")
+            # ),
+            # tags$hr(),
+            # 
+            # 
+            # # New KISS Score Plot Panel
+            # plotOutput("kissPlot", height = "600px"),
+            # tags$br(),
+            # conditionalPanel(
+            #   condition = "input.kinase != '' && output.kissPlot !== null",
+            #   downloadButton("download_kiss_plot", "Download KISS Plot (.png)")
+            # ),
+            # tags$hr(),
             
             tags$br(), tags$br(),
             plotOutput("barPlot", height = "600px"),
@@ -848,6 +886,173 @@ server <- function(input, output, session) {
         }
       })
       
+      # Radar Plot Rendering (1 or 2 plots)
+      output$radarPlot1 <- renderPlot({
+        if (is.null(input$first_mutation) || input$first_mutation == "") return(NULL)
+        
+        title_text <- paste("Radar Plot for", input$first_mutation)  # Set title dynamically
+        
+        # Render Radar Plot with Title
+        par(mar = c(3, 3, 3, 3))  # Adjust margins for title
+        plot.new()
+        title(main = title_text, col.main = "navy", font.main = 2, cex.main = 1.8)  # Set title properties
+        
+        radar_plot_for_kinases(mutant_wild_kinases, input$first_mutation, input$first_mutation)
+      })
+      
+      output$radarPlot2 <- renderPlot({
+        if (is.null(input$second_mutation) || input$second_mutation == "None") return(NULL)
+        
+        title_text <- paste("Radar Plot for", input$second_mutation)  # Set title dynamically
+        
+        # Render Radar Plot with Title
+        par(mar = c(3, 3, 3, 3))  # Adjust margins for title
+        plot.new()
+        title(main = title_text, col.main = "navy", font.main = 2, cex.main = 1.8)  # Set title properties
+        
+        radar_plot_for_kinases(mutant_wild_kinases, input$second_mutation, input$second_mutation)
+      })
+      
+      # Download Radar Plots
+      output$downloadRadarPlot1 <- downloadHandler(
+        filename = function() { paste(input$first_mutation, "_radar_plot.png", sep = "") },
+        content = function(file) {
+          png(file, width = 800, height = 800, res = 150)
+          radar_plot_for_kinases(mutant_wild_kinases, input$first_mutation, input$first_mutation)
+          dev.off()
+        }
+      )
+      
+      output$downloadRadarPlot2 <- downloadHandler(
+        filename = function() { paste(input$second_mutation, "_radar_plot.png", sep = "") },
+        content = function(file) {
+          if (is.null(input$second_mutation) || input$second_mutation == "None") return(NULL)
+          png(file, width = 800, height = 800, res = 150)
+          radar_plot_for_kinases(mutant_wild_kinases, input$second_mutation, input$second_mutation)
+          dev.off()
+        }
+      )
+      
+      # KISS Score Plot for First Kinase
+      output$kissPlot1 <- renderPlot({
+        if (is.null(input$first_mutation) || input$first_mutation == "") return(NULL)
+        
+        data1 <- lookup(input$first_mutation)
+        if (!is.null(data1) && nrow(data1) > 0) {
+          ggplot(data1, aes(x = Kinase_Inhibition, y = KISS)) +
+            geom_point(color = "navy", alpha = 1.0, size = 3) +
+            labs(
+              title = paste("KISS Score vs. Inhibition % for", input$first_mutation),
+              x = "Kinase Inhibition (%)",
+              y = "KISS Score"
+            ) +
+            theme_minimal() +
+            theme(
+              plot.title = element_text(size = 20, face = "bold", hjust = 0.5),
+              axis.title = element_text(size = 16),
+              axis.text = element_text(size = 14)
+            ) +
+            geom_text(
+              data = data1 %>% top_n(3, wt = KISS),
+              aes(label = Compound),
+              vjust = 0.3, hjust = -0.1, fontface = "bold", size = 6
+            ) +
+            scale_x_reverse()
+        }
+      })
+      
+      # KISS Score Plot for Second Kinase
+      output$kissPlot2 <- renderPlot({
+        if (is.null(input$second_mutation) || input$second_mutation == "None") return(NULL)
+        
+        data2 <- lookup(input$second_mutation)
+        if (!is.null(data2) && nrow(data2) > 0) {
+          ggplot(data2, aes(x = Kinase_Inhibition, y = KISS)) +
+            geom_point(color = "red", alpha = 1.0, size = 3) +
+            labs(
+              title = paste("KISS Score vs. Inhibition % for", input$second_mutation),
+              x = "Kinase Inhibition (%)",
+              y = "KISS Score"
+            ) +
+            theme_minimal() +
+            theme(
+              plot.title = element_text(size = 20, face = "bold", hjust = 0.5),
+              axis.title = element_text(size = 16),
+              axis.text = element_text(size = 14)
+            ) +
+            geom_text(
+              data = data2 %>% top_n(3, wt = KISS),
+              aes(label = Compound),
+              vjust = 0.3, hjust = -0.1, fontface = "bold", size = 6
+            ) +
+            scale_x_reverse()
+        }
+      })
+      
+      # Download KISS Plot 1
+      output$downloadKissPlot1 <- downloadHandler(
+        filename = function() { paste(input$first_mutation, "_KISS_plot.png", sep = "") },
+        content = function(file) {
+          data1 <- lookup(input$first_mutation)
+          if (is.null(data1) || nrow(data1) == 0) return(NULL)
+          
+          p <- ggplot(data1, aes(x = Kinase_Inhibition, y = KISS)) +
+            geom_point(color = "navy", alpha = 1.0, size = 3) +
+            labs(
+              title = paste("KISS Score vs. Inhibition % for", input$first_mutation),
+              x = "Kinase Inhibition (%)",
+              y = "KISS Score"
+            ) +
+            theme_minimal() +
+            theme(
+              plot.title = element_text(size = 20, face = "bold", hjust = 0.5),
+              axis.title = element_text(size = 16),
+              axis.text = element_text(size = 14)
+            ) +
+            geom_text(
+              data = data1 %>% top_n(3, wt = KISS),
+              aes(label = Compound),
+              vjust = 0.3, hjust = -0.1, fontface = "bold", size = 6
+            ) +
+            scale_x_reverse()
+          
+          ggsave(file, plot = p, device = "png", width = 8, height = 6, dpi = 150)
+        }
+      )
+      
+      # Download KISS Plot 2
+      output$downloadKissPlot2 <- downloadHandler(
+        filename = function() { paste(input$second_mutation, "_KISS_plot.png", sep = "") },
+        content = function(file) {
+          if (is.null(input$second_mutation) || input$second_mutation == "None") return(NULL)
+          
+          data2 <- lookup(input$second_mutation)
+          if (is.null(data2) || nrow(data2) == 0) return(NULL)
+          
+          p <- ggplot(data2, aes(x = Kinase_Inhibition, y = KISS)) +
+            geom_point(color = "red", alpha = 1.0, size = 3) +
+            labs(
+              title = paste("KISS Score vs. Inhibition % for", input$second_mutation),
+              x = "Kinase Inhibition (%)",
+              y = "KISS Score"
+            ) +
+            theme_minimal() +
+            theme(
+              plot.title = element_text(size = 20, face = "bold", hjust = 0.5),
+              axis.title = element_text(size = 16),
+              axis.text = element_text(size = 14)
+            ) +
+            geom_text(
+              data = data2 %>% top_n(3, wt = KISS),
+              aes(label = Compound),
+              vjust = 0.3, hjust = -0.1, fontface = "bold", size = 6
+            ) +
+            scale_x_reverse()
+          
+          ggsave(file, plot = p, device = "png", width = 8, height = 6, dpi = 150)
+        }
+      )
+      
       ### END OF SERVER LOGIC FROM wild_kinases.R
       
     }
@@ -894,120 +1099,120 @@ server <- function(input, output, session) {
           formatRound('percentage', 2) # percentage column to 2 decimal places
       })
       
-      output$radarPlot <- renderPlot({
-        if (is.null(input$kinase) || input$kinase == "") return(NULL)
-        
-        # Find the first partial match for the kinase
-        matched_kinase <- colnames(mutant_wild_kinases)[grep(tolower(input$kinase), tolower(colnames(mutant_wild_kinases)))][1]
-        
-        # If no partial match is found, display the custom message
-        if (is.na(matched_kinase)) {
-          plot.new()
-          text(0.5, 0.5, paste("No FDA Drug Inhibition data available for", input$kinase, "kinase."), cex = 2, col = "red", font = 2)
-          return(NULL)
-        }
-        
-        # If a partial match is found, proceed with rendering the radar plot
-        radar_plot_for_kinases(mutant_wild_kinases, matched_kinase, input$kinase)
-      })
-      
-      output$downloadRadarPlot <- downloadHandler(
-        filename = function() {
-          paste(input$kinase, "_radar_plot.png", sep = "")
-        },
-        content = function(file) {
-          tryCatch({
-            # Set up PNG device with proper dimensions and resolution
-            png(file, width = 800, height = 800, res = 150)
-            
-            # Find the matched kinase for the download handler
-            matched_kinase <- colnames(mutant_wild_kinases)[grep(tolower(input$kinase), tolower(colnames(mutant_wild_kinases)))][1]
-            
-            # Check if matched_kinase is not NA before plotting
-            if (!is.na(matched_kinase)) {
-              radar_plot_for_kinases(mutant_wild_kinases, matched_kinase, input$kinase)
-            } else {
-              # If no match found, create a blank plot with a message
-              plot.new()
-              text(0.5, 0.5, paste("No FDA Drug Inhibition data available for", input$kinase, "kinase."), cex = 2, col = "red", font = 2)
-            }
-            
-            dev.off()  # Close the PNG device to finalize the file
-          }, error = function(e) {
-            message("Error in generating the radar plot: ", e$message)
-          })
-        }
-      )
-      
-      # New Plot for KISS Score vs Kinase Inhibition
-      kiss_data <- reactive({
-        if (input$kinase == "") return(NULL)
-        lookup(input$kinase)
-      })
-      
-      output$kissPlot <- renderPlot({
-        if (is.null(input$kinase) || input$kinase == "") return(NULL)
-        
-        data <- kiss_data()
-        if (is.null(data) || nrow(data) == 0) {
-          # If no data is found, display the custom message
-          plot.new()
-          text(0.5, 0.5, paste("No FDA drug Inhibition data available for", input$kinase, "kinase."), cex = 2, col = "red", font = 2)
-          return(NULL)
-        }
-        
-        ggplot(data, aes(x = Kinase_Inhibition, y = KISS)) +
-          geom_point(color = "navy", alpha = 1.0, size = 3) +
-          labs(
-            title = paste("KISS Score vs. Inhibition % for", input$kinase),
-            x = "Kinase Inhibition (%)",
-            y = "KISS Score"
-          ) +
-          theme_minimal() +
-          theme(
-            plot.title = element_text(size = 20, face = "bold", hjust = 0.5),
-            axis.title = element_text(size = 16),
-            axis.text = element_text(size = 14)
-          ) +
-          geom_text(
-            data = data %>% top_n(3, wt = KISS),
-            aes(label = Compound),
-            vjust = 0.3, hjust = -0.1, fontface = "bold", size = 6
-          ) +
-          scale_x_reverse()
-      })
-      
-      output$download_kiss_plot <- downloadHandler(
-        filename = function() {
-          paste(input$kinase, "_KISS_plot_", Sys.Date(), ".png", sep = "")
-        },
-        content = function(file) {
-          data <- kiss_data()
-          if (is.null(data)) return(NULL)
-          
-          p <- ggplot(data, aes(x = Kinase_Inhibition, y = KISS)) +
-            geom_point(color = "navy", alpha = 1.0) +
-            labs(
-              title = paste("KISS Score vs Inhibition % for", input$kinase),
-              x = "Kinase Inhibition (%)",
-              y = "KISS Score"
-            ) +
-            theme_minimal() +
-            theme(
-              plot.title = element_text(size = 20, face = "bold", hjust = 0.5),
-              axis.title = element_text(size = 16),
-              axis.text = element_text(size = 14)
-            ) +
-            geom_text(
-              data = data %>% top_n(3, wt = KISS),
-              aes(label = Compound),
-              vjust = -1, hjust = 0.5, fontface = "bold", size = 4
-            ) +
-            scale_x_reverse()
-          
-          ggsave(file, plot = p, device = "png")
-        }
-      )
+      # output$radarPlot <- renderPlot({
+      #   if (is.null(input$kinase) || input$kinase == "") return(NULL)
+      #   
+      #   # Find the first partial match for the kinase
+      #   matched_kinase <- colnames(mutant_wild_kinases)[grep(tolower(input$kinase), tolower(colnames(mutant_wild_kinases)))][1]
+      #   
+      #   # If no partial match is found, display the custom message
+      #   if (is.na(matched_kinase)) {
+      #     plot.new()
+      #     text(0.5, 0.5, paste("No FDA Drug Inhibition data available for", input$kinase, "kinase."), cex = 2, col = "red", font = 2)
+      #     return(NULL)
+      #   }
+      #   
+      #   # If a partial match is found, proceed with rendering the radar plot
+      #   radar_plot_for_kinases(mutant_wild_kinases, matched_kinase, input$kinase)
+      # })
+      # 
+      # output$downloadRadarPlot <- downloadHandler(
+      #   filename = function() {
+      #     paste(input$kinase, "_radar_plot.png", sep = "")
+      #   },
+      #   content = function(file) {
+      #     tryCatch({
+      #       # Set up PNG device with proper dimensions and resolution
+      #       png(file, width = 800, height = 800, res = 150)
+      #       
+      #       # Find the matched kinase for the download handler
+      #       matched_kinase <- colnames(mutant_wild_kinases)[grep(tolower(input$kinase), tolower(colnames(mutant_wild_kinases)))][1]
+      #       
+      #       # Check if matched_kinase is not NA before plotting
+      #       if (!is.na(matched_kinase)) {
+      #         radar_plot_for_kinases(mutant_wild_kinases, matched_kinase, input$kinase)
+      #       } else {
+      #         # If no match found, create a blank plot with a message
+      #         plot.new()
+      #         text(0.5, 0.5, paste("No FDA Drug Inhibition data available for", input$kinase, "kinase."), cex = 2, col = "red", font = 2)
+      #       }
+      #       
+      #       dev.off()  # Close the PNG device to finalize the file
+      #     }, error = function(e) {
+      #       message("Error in generating the radar plot: ", e$message)
+      #     })
+      #   }
+      # )
+      # 
+      # # New Plot for KISS Score vs Kinase Inhibition
+      # kiss_data <- reactive({
+      #   if (input$kinase == "") return(NULL)
+      #   lookup(input$kinase)
+      # })
+      # 
+      # output$kissPlot <- renderPlot({
+      #   if (is.null(input$kinase) || input$kinase == "") return(NULL)
+      #   
+      #   data <- kiss_data()
+      #   if (is.null(data) || nrow(data) == 0) {
+      #     # If no data is found, display the custom message
+      #     plot.new()
+      #     text(0.5, 0.5, paste("No FDA drug Inhibition data available for", input$kinase, "kinase."), cex = 2, col = "red", font = 2)
+      #     return(NULL)
+      #   }
+      #   
+      #   ggplot(data, aes(x = Kinase_Inhibition, y = KISS)) +
+      #     geom_point(color = "navy", alpha = 1.0, size = 3) +
+      #     labs(
+      #       title = paste("KISS Score vs. Inhibition % for", input$kinase),
+      #       x = "Kinase Inhibition (%)",
+      #       y = "KISS Score"
+      #     ) +
+      #     theme_minimal() +
+      #     theme(
+      #       plot.title = element_text(size = 20, face = "bold", hjust = 0.5),
+      #       axis.title = element_text(size = 16),
+      #       axis.text = element_text(size = 14)
+      #     ) +
+      #     geom_text(
+      #       data = data %>% top_n(3, wt = KISS),
+      #       aes(label = Compound),
+      #       vjust = 0.3, hjust = -0.1, fontface = "bold", size = 6
+      #     ) +
+      #     scale_x_reverse()
+      # })
+      # 
+      # output$download_kiss_plot <- downloadHandler(
+      #   filename = function() {
+      #     paste(input$kinase, "_KISS_plot_", Sys.Date(), ".png", sep = "")
+      #   },
+      #   content = function(file) {
+      #     data <- kiss_data()
+      #     if (is.null(data)) return(NULL)
+      #     
+      #     p <- ggplot(data, aes(x = Kinase_Inhibition, y = KISS)) +
+      #       geom_point(color = "navy", alpha = 1.0) +
+      #       labs(
+      #         title = paste("KISS Score vs Inhibition % for", input$kinase),
+      #         x = "Kinase Inhibition (%)",
+      #         y = "KISS Score"
+      #       ) +
+      #       theme_minimal() +
+      #       theme(
+      #         plot.title = element_text(size = 20, face = "bold", hjust = 0.5),
+      #         axis.title = element_text(size = 16),
+      #         axis.text = element_text(size = 14)
+      #       ) +
+      #       geom_text(
+      #         data = data %>% top_n(3, wt = KISS),
+      #         aes(label = Compound),
+      #         vjust = -1, hjust = 0.5, fontface = "bold", size = 4
+      #       ) +
+      #       scale_x_reverse()
+      #     
+      #     ggsave(file, plot = p, device = "png")
+      #   }
+      # )
       
       # Existing Bar Plot for Kinase Occurrences
       output$barPlot <- renderPlot({
