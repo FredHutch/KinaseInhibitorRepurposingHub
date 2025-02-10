@@ -59,43 +59,43 @@ calculate_KISS <- function(row, kinases) {
 
 # Function for looking up kinases (from cancer_app2.R)
 lookup <- function(kinase) {
-    # If no kinase input, return NULL
-    if (is.null(kinase) || kinase == "") return(NULL)
-    
-    # Find the first partial match for the kinase
-    matched_kinase <- wt_kinases[grep(tolower(kinase), tolower(wt_kinases))][1]
-    
-    # If no match found, return NULL
-    if (is.na(matched_kinase)) {
-        return(NULL)
-    }
-    
-    # Create a dataframe with relevant columns (CAS, Compound, Dose, Kinase Inhibition)
-    df <- data.frame(
-        CAS = new_wt_data$CAS,
-        Compound = new_wt_data$Compound,
-        Dose = new_wt_data$`Dose()µM)`,  # Assuming correct format here
-        Kinase_Inhibition = new_wt_data[[matched_kinase]],
-        stringsAsFactors = FALSE
-    )
-    
-    # If all values in Kinase_Inhibition are NA, return NULL
-    if (all(is.na(df$Kinase_Inhibition))) return(NULL)
-    
-    # Calculate KISS score
-    df$KISS <- apply(new_wt_data[, 6:ncol(new_wt_data)], 1, function(row) {
-        score <- calculate_KISS(row, kinases = matched_kinase)
-        if (is.nan(score)) return(NA)
-        return(score)
-    })
-    
-    # Filter rows where Kinase_Inhibition and KISS are not NA
-    df <- df[!is.na(df$Kinase_Inhibition) & !is.na(df$KISS), ]
-    
-    # If the filtered dataframe is empty, return NULL
-    if (nrow(df) == 0) return(NULL)
-    
-    return(df)
+  # If no kinase input, return NULL
+  if (is.null(kinase) || kinase == "") return(NULL)
+  
+  # Find the first partial match for the kinase
+  matched_kinase <- wt_kinases[grep(tolower(kinase), tolower(wt_kinases))][1]
+  
+  # If no match found, return NULL
+  if (is.na(matched_kinase)) {
+    return(NULL)
+  }
+  
+  # Create a dataframe with relevant columns (CAS, Compound, Dose, Kinase Inhibition)
+  df <- data.frame(
+    CAS = new_wt_data$CAS,
+    Compound = new_wt_data$Compound,
+    Dose = new_wt_data$`Dose()µM)`,  # Assuming correct format here
+    Kinase_Inhibition = new_wt_data[[matched_kinase]],
+    stringsAsFactors = FALSE
+  )
+  
+  # If all values in Kinase_Inhibition are NA, return NULL
+  if (all(is.na(df$Kinase_Inhibition))) return(NULL)
+  
+  # Calculate KISS score
+  df$KISS <- apply(new_wt_data[, 6:ncol(new_wt_data)], 1, function(row) {
+    score <- calculate_KISS(row, kinases = matched_kinase)
+    if (is.nan(score)) return(NA)
+    return(score)
+  })
+  
+  # Filter rows where Kinase_Inhibition and KISS are not NA
+  df <- df[!is.na(df$Kinase_Inhibition) & !is.na(df$KISS), ]
+  
+  # If the filtered dataframe is empty, return NULL
+  if (nrow(df) == 0) return(NULL)
+  
+  return(df)
 }
 
 # Function to generate radar plot
@@ -124,23 +124,23 @@ radar_plot_for_kinases <- function(wild_df, kinase, input_kinase) {
   for (i in 1:num_drugs) {
     # Adjust inhibition values to thresholds
     if (values[i] <= 25) {
-        x_pos <- cos(angles[i]) * 0.25
-        y_pos <- sin(angles[i]) * 0.25
-        segments(0, 0, x_pos, y_pos, col = rgb(30, 144, 255, maxColorValue = 255), lwd = 0.5)  
+      x_pos <- cos(angles[i]) * 0.25
+      y_pos <- sin(angles[i]) * 0.25
+      segments(0, 0, x_pos, y_pos, col = rgb(30, 144, 255, maxColorValue = 255), lwd = 0.5)  
     } else if (values[i] <= 50) {
-        x_pos <- cos(angles[i]) * 0.5 
-        y_pos <- sin(angles[i]) * 0.5
-        segments(0, 0, x_pos, y_pos, col = rgb(30, 144, 255, maxColorValue = 255), lwd = 1) 
+      x_pos <- cos(angles[i]) * 0.5 
+      y_pos <- sin(angles[i]) * 0.5
+      segments(0, 0, x_pos, y_pos, col = rgb(30, 144, 255, maxColorValue = 255), lwd = 1) 
     } else if (values[i] <= 75) {
-        x_pos <- cos(angles[i]) * 0.75 
-        y_pos <- sin(angles[i]) * 0.75
-        segments(0, 0, x_pos, y_pos, col = rgb(30, 144, 255, maxColorValue = 255), lwd = 1.5)  
+      x_pos <- cos(angles[i]) * 0.75 
+      y_pos <- sin(angles[i]) * 0.75
+      segments(0, 0, x_pos, y_pos, col = rgb(30, 144, 255, maxColorValue = 255), lwd = 1.5)  
     } else {
-        x_pos <- cos(angles[i]) * 1 
-        y_pos <- sin(angles[i]) * 1
-        segments(0, 0, x_pos, y_pos, col = rgb(30, 144, 255, maxColorValue = 255), lwd = 4) 
+      x_pos <- cos(angles[i]) * 1 
+      y_pos <- sin(angles[i]) * 1
+      segments(0, 0, x_pos, y_pos, col = rgb(30, 144, 255, maxColorValue = 255), lwd = 4) 
     }
-}
+  }
   
   # Add kinase name in the center
   text(0, 0, labels = input_kinase, cex = 2.0, col = "black", font = 2)
@@ -195,17 +195,17 @@ ui <- fluidPage(
       
       # Use divs with CSS styling to equally space out the buttons
       div(style = "display: flex; justify-content: center; gap: 15px;",  # Adjusted spacing
-          actionButton("mutation_button", HTML("Identifying Drug Candidates <br> to Inhibit Mutant Kinase(s)"), 
-                       class = "btn btn-primary", 
-                       style = "width: 620px; font-size: 35px; padding: 12px 18px; text-align: center; 
-                          text-decoration: underline; background-color: #337ab7; color: white; 
-                          border: 2px solid #337ab7; border-radius: 5px; white-space: normal;"),
-          
           actionButton("wild_button", HTML("Identifying Drug Candidates <br> to Inhibit Wild-Type Kinase(s)"), 
                        class = "btn btn-success", 
                        style = "width: 620px; font-size: 35px; padding: 12px 18px; text-align: center; 
                           text-decoration: underline; background-color: #5cb85c; color: white; 
                           border: 2px solid #5cb85c; border-radius: 5px; white-space: normal;"),
+          
+          actionButton("mutation_button", HTML("Identifying Drug Candidates <br> to Inhibit Mutant Kinase(s)"), 
+                       class = "btn btn-primary", 
+                       style = "width: 620px; font-size: 35px; padding: 12px 18px; text-align: center; 
+                          text-decoration: underline; background-color: #337ab7; color: white; 
+                          border: 2px solid #337ab7; border-radius: 5px; white-space: normal;"),
           
           actionButton("lineage_button", HTML("Exploring Kinase Importance <br> Across Cancer Lineages"), 
                        class = "btn btn-info", 
@@ -234,7 +234,7 @@ server <- function(input, output, session) {
   observeEvent(input$mutation_button, {
     active_app("mutation")
   })
-
+  
   # Observe when the Wild Kinase button is clicked
   observeEvent(input$wild_button, {
     active_app("wild")
@@ -321,10 +321,10 @@ server <- function(input, output, session) {
       ### END OF UI FROM mutations_app1.R
       
     } else if (active_app() == "wild") {
-
+      
       ### UI FROM Wild Kinases Only  App with Paralogs
-
-        fluidPage(
+      
+      fluidPage(
         titlePanel(div(HTML('<b>Identifying Drug(s) to Inhibit Wild-Type Kinases</b>'), style = "font-size: 30px; text-align: center; color: steelblue;")),
         
         sidebarLayout(
@@ -375,9 +375,9 @@ server <- function(input, output, session) {
           )
         )
       )
-
+      
       ### END of UI from wild kinases app.R
-
+      
     } else if (active_app() == "lineage") {
       
       ### UI FROM cancer_app2.R (Cancer Lineages)
@@ -439,7 +439,7 @@ server <- function(input, output, session) {
               )
             ),
             tags$hr(),
-
+            
             # Radar plot UI (added)      
             plotOutput("radarPlot", height = "600px"),  # Set radar plot height to 600px
             tags$br(),
@@ -448,8 +448,8 @@ server <- function(input, output, session) {
               downloadButton("downloadRadarPlot", "Download Radar Plot (.png)")
             ),
             tags$hr(),
-
-
+            
+            
             # New KISS Score Plot Panel
             plotOutput("kissPlot", height = "600px"),
             tags$br(),
@@ -496,15 +496,15 @@ server <- function(input, output, session) {
           updateSelectizeInput(session, "first_mutation", selected = "")
         }
       })
-
+      
       observeEvent(input$first_mutation, {
         # Get the current first mutation selection
         selected_first_mutation <- input$first_mutation
-  
+        
         # Update the choices for the second mutation, excluding the selected first mutation
         updateSelectizeInput(session, "second_mutation",
-                            choices = c("None", colnames(mutant_wild_kinases[mutant_kinases])[colnames(mutant_wild_kinases[mutant_kinases]) != selected_first_mutation]),
-                            selected = "None")
+                             choices = c("None", colnames(mutant_wild_kinases[mutant_kinases])[colnames(mutant_wild_kinases[mutant_kinases]) != selected_first_mutation]),
+                             selected = "None")
       })
       
       # Reactive data to handle the filtered table
@@ -668,7 +668,7 @@ server <- function(input, output, session) {
       
     }
   })
-
+  
   # Server logic for Wild Kinases app (from wild_kinases.R)
   observeEvent(active_app(), {
     if (active_app() == "wild") {
@@ -681,14 +681,14 @@ server <- function(input, output, session) {
           updateSelectizeInput(session, "first_mutation", selected = "")
         }
       })
-
+      
       observeEvent(input$first_mutation, {
         selected_mutation <- input$first_mutation
-  
+        
         # Update the choices for the second mutation, excluding the selected first mutation
         updateSelectizeInput(session, "second_mutation",
-                            choices = c("None", wt_kinases[wt_kinases != selected_mutation]),  # Exclude first mutation
-                            selected = "None")
+                             choices = c("None", wt_kinases[wt_kinases != selected_mutation]),  # Exclude first mutation
+                             selected = "None")
       })
       
       # Reactive data to handle the filtered table
@@ -893,7 +893,7 @@ server <- function(input, output, session) {
         datatable(data, colnames = column_names, options = list(pageLength = 15), rownames = FALSE) %>%
           formatRound('percentage', 2) # percentage column to 2 decimal places
       })
-
+      
       output$radarPlot <- renderPlot({
         if (is.null(input$kinase) || input$kinase == "") return(NULL)
         
@@ -910,7 +910,7 @@ server <- function(input, output, session) {
         # If a partial match is found, proceed with rendering the radar plot
         radar_plot_for_kinases(mutant_wild_kinases, matched_kinase, input$kinase)
       })
-    
+      
       output$downloadRadarPlot <- downloadHandler(
         filename = function() {
           paste(input$kinase, "_radar_plot.png", sep = "")
