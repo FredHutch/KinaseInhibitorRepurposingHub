@@ -212,12 +212,22 @@ ui <- fluidPage(
                        style = "width: 620px; font-size: 35px; padding: 12px 18px; text-align: center; 
                           text-decoration: underline; background-color: #5bc0de; color: white; 
                           border: 2px solid #5bc0de; border-radius: 5px; white-space: normal;")
-      )
-      ,
+      ),
       width = 2.3
     ),
-    
+  
     mainPanel(
+      # Introduction Section (Placed BELOW the buttons)
+      tags$div(
+        style = "text-align: center; max-width: 1500px; margin-left: 200px; padding: 10px;",
+        tags$p(HTML("
+          <b>KIRHub</b> is an interactive web-based platform designed for researchers and clinicians 
+          to explore the relationship between FDA-approved kinase inhibitors and their effects on 
+          both wild-type and oncogenic kinase variants. The application is fully browser-based, 
+          requiring no data uploads, ensuring ease of use and accessibility.<br><br>
+        "), style = "font-size: 18px; color: black;")
+      ),
+      
       uiOutput("app_ui"),
       width = 15
     )
