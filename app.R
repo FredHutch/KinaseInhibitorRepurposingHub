@@ -224,7 +224,7 @@ ui <- fluidPage(
           <b>KIRHub</b> is an interactive web-based platform designed for researchers and clinicians 
           to explore the relationship between FDA-approved kinase inhibitors and their effects on 
           both wild-type and oncogenic kinase variants. The application is fully browser-based, 
-          requiring no data uploads, ensuring ease of use and accessibility.<br><br>
+          requiring no data uploads, ensuring ease of use and accessibility. Click on the logo on the top right to reach out regarding any questions or inquiries.<br><br>
         "), style = "font-size: 18px; color: black;")
       ),
       
