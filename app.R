@@ -1034,9 +1034,8 @@ server <- function(input, output, session) {
             geom_text(
               data = data1 %>% top_n(3, wt = KISS),
               aes(label = Compound),
-              vjust = 0.3, hjust = -0.1, fontface = "bold", size = 6
-            ) +
-            scale_x_reverse()
+              vjust = 0.3, hjust = -0.05, fontface = "bold", size = 6
+            )
         }
       })
       
@@ -1062,9 +1061,8 @@ server <- function(input, output, session) {
             geom_text(
               data = data2 %>% top_n(3, wt = KISS),
               aes(label = Compound),
-              vjust = 0.3, hjust = -0.1, fontface = "bold", size = 6
-            ) +
-            scale_x_reverse()
+              vjust = 0.3, hjust = -0.05, fontface = "bold", size = 6
+            ) 
         }
       })
       
@@ -1091,9 +1089,8 @@ server <- function(input, output, session) {
             geom_text(
               data = data1 %>% top_n(3, wt = KISS),
               aes(label = Compound),
-              vjust = 0.3, hjust = -0.1, fontface = "bold", size = 6
-            ) +
-            scale_x_reverse()
+              vjust = 0.3, hjust = -0.05, fontface = "bold", size = 6
+            )
           
           ggsave(file, plot = p, device = "png", width = 8, height = 6, dpi = 150)
         }
@@ -1124,9 +1121,8 @@ server <- function(input, output, session) {
             geom_text(
               data = data2 %>% top_n(3, wt = KISS),
               aes(label = Compound),
-              vjust = 0.3, hjust = -0.1, fontface = "bold", size = 6
-            ) +
-            scale_x_reverse()
+              vjust = 0.3, hjust = -0.05, fontface = "bold", size = 6
+            )
           
           ggsave(file, plot = p, device = "png", width = 8, height = 6, dpi = 150)
         }
