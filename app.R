@@ -318,7 +318,7 @@ server <- function(input, output, session) {
               style = "margin-top: 10px; padding: 10px; border: 1px solid #ddd; background-color: white;",
               tags$p(HTML("<b>Please cite the following publication for use of this tool:</b>"), 
                      style = "font-size: 14px; color: black;"),
-              tags$p(HTML("Saifudeen et al., (2025). Title of the paper"), 
+              tags$p(HTML("Saifudeen et al., (2025). Comprehensive Profiling of Clinical Kinase Inhibitors Reveals Opportunities for Drug Repurposing and Uncovering New Biology."), 
                      style = "font-size: 14px; color: black;"),
               tags$hr(),
               tags$p(HTML("<i>Disclaimer: This application should not be considered, or used as a substitute for, medical advice, diagnosis or treatment. 
@@ -409,7 +409,7 @@ server <- function(input, output, session) {
               style = "margin-top: 10px; padding: 10px; border: 1px solid #ddd; background-color: white;",
               tags$p(HTML("<b>Please cite the following publication for use of this tool:</b>"), 
                      style = "font-size: 14px; color: black;"),
-              tags$p(HTML("Saifudeen et al., (2025). Title of the paper"), 
+              tags$p(HTML("Saifudeen et al., (2025). Comprehensive Profiling of Clinical Kinase Inhibitors Reveals Opportunities for Drug Repurposing and Uncovering New Biology."), 
                      style = "font-size: 14px; color: black;"),
               tags$hr(),
               tags$p(HTML("<i>Disclaimer: This application should not be considered, or used as a substitute for, medical advice, diagnosis or treatment. 
@@ -518,7 +518,7 @@ server <- function(input, output, session) {
               style = "margin-top: 10px; padding: 10px; border: 1px solid #ddd; background-color: white;",
               tags$p(HTML("<b>Please cite the following publication for use of this tool:</b>"), 
                      style = "font-size: 14px; color: black;"),
-              tags$p(HTML("Saifudeen et al., (2025). Title of the paper"), 
+              tags$p(HTML("Saifudeen et al., (2025). Comprehensive Profiling of Clinical Kinase Inhibitors Reveals Opportunities for Drug Repurposing and Uncovering New Biology."), 
                      style = "font-size: 14px; color: black;"),
               tags$hr(),
               tags$p(HTML("<i>Disclaimer: This application should not be considered, or used as a substitute for, medical advice, diagnosis or treatment. 
