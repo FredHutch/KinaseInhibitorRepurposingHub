@@ -312,6 +312,29 @@ server <- function(input, output, session) {
                 tags$hr()
               )
             ),
+            
+            # Citation and Disclaimer Section
+            tags$div(
+              style = "margin-top: 10px; padding: 10px; border: 1px solid #ddd; background-color: white;",
+              tags$p(HTML("<b>Please cite the following publication for use of this tool:</b>"), 
+                     style = "font-size: 14px; color: black;"),
+              tags$p(HTML("Saifudeen et al., (2025). Title of the paper"), 
+                     style = "font-size: 14px; color: black;"),
+              tags$hr(),
+              tags$p(HTML("<i>Disclaimer: This application should not be considered, or used as a substitute for, medical advice, diagnosis or treatment. 
+      This site does not constitute the practice of any medical, nursing or other professional health care advice, diagnosis or treatment.</i>"), 
+                     style = "font-size: 14px; color: grey; text-align: left;")
+            ),
+            
+            # Reaction Biology Corporation Acknowledgment
+            tags$div(
+              style = "margin-top: 10px; padding: 10px; border: 1px solid #ddd; background-color: white;",
+              tags$p(HTML("<i>Note: The kinase inhibition data presented here is the property of Reaction Biology Corporation. 
+      Recipients must properly acknowledge Reaction Biology Corporation when downloading, utilizing, 
+      and / or publishing these data. For questions, please contact <a href='mailto:info@reactionbiology.com'>info@reactionbiology.com</a>.</i>"), 
+                     style = "font-size: 14px; color: grey; text-align: left;")
+            ),
+            
             width = 3
           ),
           
@@ -381,16 +404,28 @@ server <- function(input, output, session) {
               options = list(placeholder = 'Select kinase in combination with above (optional)...')
             ),
             
+            # Citation and Disclaimer Section
             tags$div(
-              style = "margin-top: 20px; padding: 10px; border: 1px solid #ddd; background-color: white;",
-              tags$h4(div(HTML('<b>User Instructions:</b>'), style = "text-align: left; color:steelblue; font-size: 20px;")),
-              tags$ol(
-                tags$li(div(HTML("<b> Select a specific kinase </b> for which you would like to identify an FDA-approved inhibitor (e.g., ABL1).")), style = "font-size: 15px;"),
-                HTML("<br>"),
-                tags$li(div(HTML("<b> (Optional) </b> Select an additional kinase to find FDA-approved drugs that inhibit the combination kinases. If none, leave this blank.")), style = "font-size: 15px;"),
-                tags$hr()
-              )
+              style = "margin-top: 10px; padding: 10px; border: 1px solid #ddd; background-color: white;",
+              tags$p(HTML("<b>Please cite the following publication for use of this tool:</b>"), 
+                     style = "font-size: 14px; color: black;"),
+              tags$p(HTML("Saifudeen et al., (2025). Title of the paper"), 
+                     style = "font-size: 14px; color: black;"),
+              tags$hr(),
+              tags$p(HTML("<i>Disclaimer: This application should not be considered, or used as a substitute for, medical advice, diagnosis or treatment. 
+      This site does not constitute the practice of any medical, nursing or other professional health care advice, diagnosis or treatment.</i>"), 
+                     style = "font-size: 14px; color: grey; text-align: left;")
             ),
+            
+            # Reaction Biology Corporation Acknowledgment
+            tags$div(
+              style = "margin-top: 10px; padding: 10px; border: 1px solid #ddd; background-color: white;",
+              tags$p(HTML("<i>Note: The kinase inhibition data presented here is the property of Reaction Biology Corporation. 
+      Recipients must properly acknowledge Reaction Biology Corporation when downloading, utilizing, 
+      and / or publishing these data. For questions, please contact <a href='mailto:info@reactionbiology.com'>info@reactionbiology.com</a>.</i>"), 
+                     style = "font-size: 14px; color: grey; text-align: left;")
+            ),
+            
             width = 3
           ),
           
@@ -477,6 +512,29 @@ server <- function(input, output, session) {
                 tags$hr()
               )
             ),
+            
+            # Citation and Disclaimer Section
+            tags$div(
+              style = "margin-top: 10px; padding: 10px; border: 1px solid #ddd; background-color: white;",
+              tags$p(HTML("<b>Please cite the following publication for use of this tool:</b>"), 
+                     style = "font-size: 14px; color: black;"),
+              tags$p(HTML("Saifudeen et al., (2025). Title of the paper"), 
+                     style = "font-size: 14px; color: black;"),
+              tags$hr(),
+              tags$p(HTML("<i>Disclaimer: This application should not be considered, or used as a substitute for, medical advice, diagnosis or treatment. 
+      This site does not constitute the practice of any medical, nursing or other professional health care advice, diagnosis or treatment.</i>"), 
+                     style = "font-size: 14px; color: grey; text-align: left;")
+            ),
+            
+            # Reaction Biology Corporation Acknowledgment
+            tags$div(
+              style = "margin-top: 10px; padding: 10px; border: 1px solid #ddd; background-color: white;",
+              tags$p(HTML("<i>Note: The kinase inhibition data presented here is the property of Reaction Biology Corporation. 
+      Recipients must properly acknowledge Reaction Biology Corporation when downloading, utilizing, 
+      and / or publishing these data. For questions, please contact <a href='mailto:info@reactionbiology.com'>info@reactionbiology.com</a>.</i>"), 
+                     style = "font-size: 14px; color: grey; text-align: left;")
+            ),
+            
             width = 3
           ),
           
