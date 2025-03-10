@@ -176,7 +176,7 @@ ui <- fluidPage(
     # Logo with link, positioned on the top-right and with space at the bottom
     div(
       tags$a(href = "https://research.fredhutch.org/gujral/en/lab-members.html", target = "_blank",
-             tags$img(src = "assets/logo.png", height = "80px", style = "position: absolute; right: 20px; top: 10px; margin-bottom: 20px;"))  # Added margin-bottom
+             tags$img(src = "assets/logo.png", height = "80px", style = "position: absolute; right: 20px; top: 10px; margin-bottom: 20px;"))
     )
   ),
   
@@ -194,7 +194,7 @@ ui <- fluidPage(
       h4(div(HTML('<b>Select an App to begin Kinase Analysis</b>'), style = "font-size: 35px; text-align: center; color: black;")),
       
       # Use divs with CSS styling to equally space out the buttons
-      div(style = "display: flex; justify-content: center; gap: 15px;",  # Adjusted spacing
+      div(style = "display: flex; justify-content: center; gap: 15px;",
           actionButton("wild_button", HTML("Identifying Drug Candidates <br> to Inhibit Wild-Type Kinase(s)"), 
                        class = "btn btn-success", 
                        style = "width: 620px; font-size: 35px; padding: 12px 18px; text-align: center; 
@@ -215,7 +215,7 @@ ui <- fluidPage(
       ),
       width = 2.3
     ),
-  
+    
     mainPanel(
       # Introduction Section (Placed BELOW the buttons)
       tags$div(
@@ -227,6 +227,21 @@ ui <- fluidPage(
           requiring no data uploads, ensuring ease of use and accessibility. 
           Click on the logo on the top right to reach out regarding any questions or inquiries.<br><br>
         "), style = "font-size: 18px; color: black;")
+      ),
+      
+      # GIF Section (Initially Visible)
+      conditionalPanel(
+        condition = "output.app_active == false",
+        tags$div(
+          id = "gif_section",
+          style = "text-align: center; margin-top: 10px;",
+          
+          # Title for the GIF section
+          tags$h3("Kinase Inhibitor Database Overview", style = "color: steelblue; font-size: 34px; font-weight: bold;"),
+          
+          tags$img(src = "kinases_radar_plots.gif", height = "700px", style = "margin-right: 30px;"),
+          tags$img(src = "kinase_inhibitors_radar_plots.gif", height = "700px")
+        )
       ),
       
       uiOutput("app_ui"),
@@ -244,17 +259,26 @@ server <- function(input, output, session) {
   # Observe when the Mutation Combinations button is clicked
   observeEvent(input$mutation_button, {
     active_app("mutation")
+    shinyjs::hide("gif_section")  # Hide GIFs
   })
   
   # Observe when the Wild Kinase button is clicked
   observeEvent(input$wild_button, {
     active_app("wild")
+    shinyjs::hide("gif_section")  # Hide GIFs
   })
   
   # Observe when the Cancer Lineages button is clicked
   observeEvent(input$lineage_button, {
     active_app("lineage")
+    shinyjs::hide("gif_section")  # Hide GIFs
   })
+  
+  # Track if an app is active
+  output$app_active <- reactive({
+    active_app() != ""
+  })
+  outputOptions(output, "app_active", suspendWhenHidden = FALSE)
   
   # UI output for the selected app
   output$app_ui <- renderUI({
