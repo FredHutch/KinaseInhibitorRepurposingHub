@@ -239,8 +239,8 @@ ui <- fluidPage(
           # Title for the GIF section
           tags$h3("Kinase Inhibitor Database Overview", style = "color: steelblue; font-size: 34px; font-weight: bold;"),
           
-          tags$img(src = "kinases_radar_plots.gif", height = "700px", style = "margin-right: 30px;"),
-          tags$img(src = "kinase_inhibitors_radar_plots.gif", height = "700px")
+          tags$img(src = "assets/kinases_radar_plots.gif", height = "700px", style = "margin-right: 30px;"),
+          tags$img(src = "assets/kinase_inhibitors_radar_plots.gif", height = "700px")
         )
       ),
       
