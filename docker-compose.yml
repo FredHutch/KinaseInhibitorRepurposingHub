@@ -11,7 +11,7 @@ services:
         - "traefik.enable=true"
         - "traefik.http.routers.kirhub.middlewares=kirhubauth"
         - "traefik.http.routers.kirhub-secured.middlewares=kirhubauth"
-        - "traefik.http.middlewares.kirhubauth.basicauth.users=testuser:$$2y$$12$$ci.4U63YX83CwkyUrjqxAucnmi2xXOIlEF6T/KdP9824f1Rf1iyNG,msaifude:$$apr1$$tXwNsJG.$$r0rMhMENwSrhbOJi5d2/Q1"
+        - "traefik.http.middlewares.kirhubauth.basicauth.users=testuser:$$2y$$12$$ci.4U63YX83CwkyUrjqxAucnmi2xXOIlEF6T/KdP9824f1Rf1iyNG,msaifude:$$apr1$$tXwNsJG.$$r0rMhMENwSrhbOJi5d2/Q1,kirhub:$$apr1$$Fpl9esp7$$Oix4.Y7PdQwaon31ppACt."
         - "traefik.http.routers.kirhub.rule=Host(`kirhub.fredhutch.org`)"
         - "traefik.http.routers.kirhub-secured.rule=Host(`kirhub.fredhutch.org`)"
         - "traefik.http.routers.kirhub.entrypoints=web,web-secured"
