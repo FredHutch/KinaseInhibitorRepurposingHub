@@ -120,27 +120,33 @@ radar_plot_for_kinases <- function(wild_df, kinase, input_kinase) {
     text(0, level / 100, paste0('≤ ', level, '% Inhibition'), col = 'darkgrey', cex = 1.2)
   }
   
-  # Draw radial lines for inhibition values with varying alpha and length
+  # ---- MODIFIED ONLY THIS SECTION ----
+  # Draw radial lines for exact inhibition values (widths & colors unchanged)
   for (i in 1:num_drugs) {
-    # Adjust inhibition values to thresholds
+    # compute end‐point at true inhibition fraction
+    x_end <- cos(angles[i]) * (values[i] / 100)
+    y_end <- sin(angles[i]) * (values[i] / 100)
+    
+    # preserve your original lwd logic
     if (values[i] <= 25) {
-      x_pos <- cos(angles[i]) * 0.25
-      y_pos <- sin(angles[i]) * 0.25
-      segments(0, 0, x_pos, y_pos, col = rgb(30, 144, 255, maxColorValue = 255), lwd = 0.5)  
+      lw <- 0.5
+      alpha_val <- 1   # alpha isn’t used in base R segments()
     } else if (values[i] <= 50) {
-      x_pos <- cos(angles[i]) * 0.5 
-      y_pos <- sin(angles[i]) * 0.5
-      segments(0, 0, x_pos, y_pos, col = rgb(30, 144, 255, maxColorValue = 255), lwd = 1) 
+      lw <- 1
+      alpha_val <- 1
     } else if (values[i] <= 75) {
-      x_pos <- cos(angles[i]) * 0.75 
-      y_pos <- sin(angles[i]) * 0.75
-      segments(0, 0, x_pos, y_pos, col = rgb(30, 144, 255, maxColorValue = 255), lwd = 1.5)  
+      lw <- 1.5
+      alpha_val <- 1
     } else {
-      x_pos <- cos(angles[i]) * 1 
-      y_pos <- sin(angles[i]) * 1
-      segments(0, 0, x_pos, y_pos, col = rgb(30, 144, 255, maxColorValue = 255), lwd = 4) 
+      lw <- 4
+      alpha_val <- 1
     }
+    
+    segments(0, 0, x_end, y_end,
+             col = rgb(30, 144, 255, maxColorValue = 255),
+             lwd = lw)
   }
+  # ---- END MODIFIED SECTION ----
   
   # Add kinase name in the center
   text(0, 0, labels = input_kinase, cex = 2.0, col = "black", font = 2)
