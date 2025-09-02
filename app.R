@@ -8,25 +8,48 @@ library(tidyr)
 library(plotly)
 
 addResourcePath("/assets", file.path(getwd(), "www"))
+addResourcePath("data",   file.path(getwd(), "data_folder"))
 
 # Load Data for both apps
 combined_data <- read.csv("./data_folder/kir_1uM_final.csv", row.names = 2)
 mutant_wild_kinases <- combined_data %>%
   select(-CAS, -SMILES, -cSMILES, -`Dose..µM.`)
 mutant_wild_kinases[is.na(mutant_wild_kinases)] <- 100
-column_choices <- sub("\\.", "(", colnames(mutant_wild_kinases))  # Replace the first dot with '(' due to R code problem where ( and ) becomes .
-column_choices <- gsub("\\.", ")", column_choices) # Replace the last dot with ')' due to R code problem where ( ) becomes .
+
+# --- mutant_wild_kinases colnames cleanup ---
+column_choices <- sub("\\.", "(", colnames(mutant_wild_kinases))
+column_choices <- gsub("\\.", ")", column_choices)
+
+# default: replace _ with /
+column_choices <- gsub("_", "/", column_choices)
+
+# special cases: replace / back to -
+column_choices <- gsub("C/MET", "C-MET", column_choices)
+column_choices <- gsub("C/SRC", "C-SRC", column_choices)
+column_choices <- gsub("C/KIT", "C-KIT", column_choices)
+column_choices <- gsub("C/MER", "C-MER", column_choices)
 
 colnames(mutant_wild_kinases) <- column_choices
 gini_scores <- read.csv("./data_folder/gini_coefficients.csv", row.names = 1)
 
-
 all_kinases <- read.csv('./data_folder/all_kinases_all_lineages_zeroes.csv')
 new_data <- read.csv("./data_folder/kir_1uM_final.csv")
-column_choices2 <- sub("\\.", "(", colnames(new_data))  # Replace the first dot with '(' due to R code problem where ( and ) becomes .
-column_choices2 <- gsub("\\.", ")", column_choices2) # Replace the last dot with ')' due to R code problem where ( ) becomes .
+
+# --- new_data colnames cleanup ---
+column_choices2 <- sub("\\.", "(", colnames(new_data))
+column_choices2 <- gsub("\\.", ")", column_choices2)
+
+# default: replace _ with /
+column_choices2 <- gsub("_", "/", column_choices2)
+
+# special cases: replace / back to -
+column_choices2 <- gsub("C/MET", "C-MET", column_choices2)
+column_choices2 <- gsub("C/SRC", "C-SRC", column_choices2)
+column_choices2 <- gsub("C/KIT", "C-KIT", column_choices2)
+column_choices2 <- gsub("C/MER", "C-MER", column_choices2)
 
 colnames(new_data) <- column_choices2
+
 new_wt_data <- new_data[, 1:(5+409)]
 new_wt_data[, 6:ncol(new_wt_data)] <- 100 - new_wt_data[, 6:ncol(new_wt_data)]
 wt_kinases <- colnames(new_wt_data)[6:ncol(new_wt_data)]
@@ -174,15 +197,26 @@ ui <- fluidPage(
   tags$div(
     style = "display: flex; justify-content: space-between; align-items: center; width: 100%;",
     
-    # Title (centered)
+    # Title (centered, clickable to go "home")
     div(
-      titlePanel(div(HTML('<b>KIRHub: Kinase Inhibitor Repurposing Hub</b>'), style = "font-size: 52px; color: steelblue; text-align: center; width: 100%;"))
+      actionLink(
+        inputId = "home_title",
+        label = HTML('<b>KIRHub: Kinase Inhibitor Repurposing Hub</b>'),
+        style = "font-size: 52px; color: steelblue; text-align: center; width: 100%; text-decoration: none;"
+      )
     ),
     
-    # Logo with link, positioned on the top-right and with space at the bottom
+    # Logo (top-right, clickable to go "home")
     div(
-      tags$a(href = "https://research.fredhutch.org/gujral/en/lab-members.html", target = "_blank",
-             tags$img(src = "assets/logo.png", height = "80px", style = "position: absolute; right: 20px; top: 10px; margin-bottom: 20px;"))
+      actionLink(
+        inputId = "home_logo",
+        label = tags$img(
+          src = "assets/logo.png",
+          height = "80px",
+          style = "position: absolute; right: 20px; top: 10px; margin-bottom: 20px;"
+        ),
+        style = "cursor: pointer; border: none; background: transparent; padding: 0;"
+      )
     )
   ),
   
@@ -200,24 +234,32 @@ ui <- fluidPage(
       h4(div(HTML('<b>Select an App to begin Kinase Analysis</b>'), style = "font-size: 35px; text-align: center; color: black;")),
       
       # Use divs with CSS styling to equally space out the buttons
-      div(style = "display: flex; justify-content: center; gap: 15px;",
-          actionButton("wild_button", HTML("Identifying Drug Candidates <br> to Inhibit Wild-Type Kinase(s)"), 
-                       class = "btn btn-success", 
-                       style = "width: 620px; font-size: 35px; padding: 12px 18px; text-align: center; 
-                          text-decoration: underline; background-color: #5cb85c; color: white; 
-                          border: 2px solid #5cb85c; border-radius: 5px; white-space: normal;"),
-          
-          actionButton("mutation_button", HTML("Identifying Drug Candidates <br> to Inhibit Mutant Kinase(s)"), 
-                       class = "btn btn-primary", 
-                       style = "width: 620px; font-size: 35px; padding: 12px 18px; text-align: center; 
-                          text-decoration: underline; background-color: #337ab7; color: white; 
-                          border: 2px solid #337ab7; border-radius: 5px; white-space: normal;"),
-          
-          actionButton("lineage_button", HTML("Exploring Kinase Importance <br> Across Cancer Lineages"), 
-                       class = "btn btn-info", 
-                       style = "width: 620px; font-size: 35px; padding: 12px 18px; text-align: center; 
-                          text-decoration: underline; background-color: #5bc0de; color: white; 
-                          border: 2px solid #5bc0de; border-radius: 5px; white-space: normal;")
+      div(
+        style = "display: flex; justify-content: center; gap: 15px;",
+        actionButton(
+          "wild_button",
+          HTML("Identifying Drug Candidates <br> to Inhibit Wild-Type Kinase(s)"),
+          class = "btn btn-success",
+          style = "width: 620px; font-size: 35px; padding: 12px 18px; text-align: center; 
+                   text-decoration: underline; background-color: #5cb85c; color: white; 
+                   border: 2px solid #5cb85c; border-radius: 5px; white-space: normal;"
+        ),
+        actionButton(
+          "mutation_button",
+          HTML("Identifying Drug Candidates <br> to Inhibit Mutant Kinase(s)"),
+          class = "btn btn-primary",
+          style = "width: 620px; font-size: 35px; padding: 12px 18px; text-align: center; 
+                   text-decoration: underline; background-color: #337ab7; color: white; 
+                   border: 2px solid #337ab7; border-radius: 5px; white-space: normal;"
+        ),
+        actionButton(
+          "lineage_button",
+          HTML("Exploring Kinase Importance <br> Across Cancer Lineages"),
+          class = "btn btn-info",
+          style = "width: 620px; font-size: 35px; padding: 12px 18px; text-align: center; 
+                   text-decoration: underline; background-color: #5bc0de; color: white; 
+                   border: 2px solid #5bc0de; border-radius: 5px; white-space: normal;"
+        )
       ),
       width = 2.3
     ),
@@ -226,13 +268,16 @@ ui <- fluidPage(
       # Introduction Section (Placed BELOW the buttons)
       tags$div(
         style = "text-align: center; max-width: 1500px; margin-left: 200px; padding: 10px;",
-        tags$p(HTML("
-          <b>KIRHub</b> is an interactive web-based platform designed for researchers and clinicians 
-          to explore the relationship between clinically-approved kinase inhibitors and their effects on 
-          both wild-type and oncogenic kinase variants. The application is fully browser-based, 
-          requiring no data uploads, ensuring ease of use and accessibility. 
-          Click on the logo on the top right to reach out regarding any questions or inquiries.<br><br>
-        "), style = "font-size: 18px; color: black;")
+        tags$p(
+          HTML("
+            <b>KIRHub</b> is an interactive web-based platform designed for researchers and clinicians 
+            to explore the relationship between clinically-approved kinase inhibitors and their effects on 
+            both wild-type and oncogenic kinase variants. The application is fully browser-based, 
+            requiring no data uploads, ensuring ease of use and accessibility. 
+            Click on the logo on the top right to reach out regarding any questions or inquiries.<br><br>
+          "),
+          style = "font-size: 18px; color: black;"
+        )
       ),
       
       # GIF Section (Initially Visible)
@@ -241,12 +286,175 @@ ui <- fluidPage(
         tags$div(
           id = "gif_section",
           style = "text-align: center; margin-top: 10px;",
-          
-          # Title for the GIF section
           tags$h3("Kinase Inhibitor Database Overview", style = "color: steelblue; font-size: 34px; font-weight: bold;"),
-          
-          tags$img(src = "assets/kinases_radar_plots.gif", height = "700px", style = "margin-right: 30px;"),
+          tags$img(src = "assets/kinases_radar_plots.gif", height = "700px"),
           tags$img(src = "assets/kinase_inhibitors_radar_plots.gif", height = "700px")
+        )
+      ),
+      
+      # ===== User Guide styles =====
+      tags$style(HTML("
+        /* User Guide styles */
+        #user_guide { max-width: 100%; margin: 40px auto 10px auto; padding: 18px 22px; 
+                      background: #ffffff; border: 1px solid #e6e6e6; border-radius: 6px; text-align: left; }
+        #user_guide h3 { margin-top: 0; color: #2b6ea6; font-size: 30px; font-weight: 800; }
+        #user_guide h4 { color: #2b6ea6; margin-top: 18px; }
+        #user_guide p, #user_guide li { font-size: 16px; line-height: 1.45; }
+        #user_guide code { background: #f7f7f9; padding: 1px 4px; border-radius: 4px; }
+        #user_guide details { margin-top: 14px; border: 1px solid #e9ecef; border-radius: 6px; 
+                              padding: 10px 14px; background: #fafbfc; }
+        #user_guide details + details { margin-top: 12px; }
+        #user_guide summary { cursor: pointer; font-weight: 700; color: #0f5c99; }
+        #user_guide .pill { display: inline-block; padding: 2px 8px; border-radius: 12px; background: #eef5fb; 
+                            color: #1d6fb8; font-weight: 700; font-size: 12px; margin-left: 6px; }
+        #user_guide .sep { height: 1px; background:#e6e6e6; margin: 16px 0; }
+      ")),
+      
+      # ===== User Guide (Home only) =====
+      conditionalPanel(
+        condition = "output.app_active == false",
+        tags$div(
+          id = "user_guide",
+          
+          # Title
+          tags$h3("KIRHub: User Guide"),
+          
+          # One-paragraph overview
+          tags$p(HTML(
+            "KIRHub is a browser-based platform for exploring profiling data of clinically approved kinase inhibitors. 
+       It provides three interactive modules: 
+       <b>(i)</b> identifying drug(s) to inhibit <b>wild-type</b> kinases, 
+       <b>(ii)</b> identifying drug(s) to inhibit <b>mutant</b> kinases, and 
+       <b>(iii)</b> exploring kinase essentiality across <b>cancer lineages</b>. 
+       Each module supports filtering, sorting, visualization, and CSV/PNG downloads—designed to surface 
+       polypharmacology and repurposing hypotheses efficiently."
+          )),
+          
+          # ---- extra spacing before Quick Start ----
+          # tags$br(),
+          
+          # Quick start
+          tags$details(
+            open = TRUE,
+            tags$summary("Quick Start  ", tags$span(class = "pill", "Recommended")),
+            tags$ol(
+              tags$li(HTML("<b>Choose a module:</b> Use the three large buttons on the left sidebar to open <b>Wild-Type Kinases</b>, <b>Mutant Kinases</b>, or <b>Cancer Lineages</b>.")),
+              tags$li(HTML("<b>Search/select:</b> Start typing a kinase/mutation; the list filters dynamically. Exact matches are best (e.g., <code>MAPK14</code>; <code>BRAF V600E</code>; <code>FGFR2 fusion</code>).")),
+              tags$li(HTML("<b>Review ranked drugs:</b> The table shows the top candidates by % inhibition (and selectivity via Gini). Use column headers to sort; use the download button to export results.")),
+              tags$li(HTML("<b>Open visuals:</b> Radar plots display per-drug inhibition distribution; KISS vs Inhibition scatters highlight drugs balancing on-target inhibition and off-target burden.")),
+              tags$li(HTML("<b>Dual targets (optional):</b> Add a second kinase/mutation to see drugs that score highly for both (intersection of top candidates)."))
+            )
+          ),
+          
+          # Module 1: Wild-type
+          tags$details(
+            tags$summary("Module 1 — Identifying Drug(s) to Inhibit Wild-Type Kinases"),
+            tags$br(),
+            tags$p("Goal: Prioritize inhibitors for a wild-type kinase (or paralog pair)."),
+            tags$ol(
+              tags$li("Select a kinase (e.g., MAPK14, CDK4, AURKA)."),
+              tags$li("Optionally select a second kinase/paralog to co-prioritize."),
+              tags$li(HTML("Review ranked drugs by % inhibition and Gini. Download table as CSV; download Radar/KISS figures as PNG.")),
+              tags$li(HTML("<b>KISS vs Inhibition</b>: Points in the upper-right (higher KISS and higher % inhibition) are favorable."))
+            )
+          ),
+          
+          # Module 2: Mutant
+          tags$details(
+            tags$summary("Module 2 — Identifying Drug(s) to Inhibit Mutant Kinase(s)"),
+            tags$br(),
+            tags$p("Goal: Find clinically approved inhibitors with high inhibition for a selected mutant kinase (optionally a combination)."),
+            tags$ol(
+              tags$li(HTML("Select a mutant (e.g., <code>BRAF V600E</code>, <code>ALK fusion</code>, <code>FGFR2 fusion</code>).")),
+              tags$li("Optionally select a second mutant to prioritize drugs effective on both."),
+              tags$li(HTML("Interpret the table: <b>Inhibition (%)</b> is computed as <code>100 − residual activity</code> at 1 μM. <b>Gini</b> approximates selectivity (higher is more selective).")),
+              tags$li("Use the download button to export ranked results (CSV)."),
+              tags$li("Open Radar Plot(s) for a quick visual of drug inhibition patterns across candidates.")
+            )
+          ),
+          
+          # Module 3: Lineages
+          tags$details(
+            tags$summary("Module 3 — Exploring Kinase Essentiality Across Cancer Lineages"),
+            tags$br(),
+            tags$p("Goal: See where a kinase is essential across primary and nested lineages (DepMap-derived)."),
+            tags$ol(
+              tags$li("Select a kinase; the table lists lineage counts and percentages where it’s essential."),
+              tags$li("Use the bar chart to compare total essential counts by Lineage 1."),
+              tags$li("Export the table or bar chart (CSV/PNG).")
+            )
+          ),
+          tags$p(HTML("<i>Note:</i> “Important/essential” is based on gene effect thresholds (e.g., &lt; −0.5) in DepMap lineages.")),
+          
+          # Assay Metadata (Reaction Biology) — Reviewer-requested context + Download links
+          tags$details(
+            tags$summary("Assay Metadata (Reaction Biology) — Downloadable Files"),
+            tags$br(),
+            tags$p(HTML(
+              "These files describe assay setup for each kinase used in biochemical profiling: 
+              whether the <b>full-length protein</b> or a <b>domain fragment</b> (with residue range when available) was assayed; 
+              the <b>expression system</b> (e.g., baculovirus/Sf21) and <b>affinity tag</b> (e.g., His/GST); and the <b>general substrate</b> (e.g., Abltide, Crosstide, Casein).
+              This context addresses reviewer concerns about regulatory domains affecting activity/folding and substrate choice shaping readouts."
+            )),
+            
+            
+            tags$div(
+              style = "margin-top: 6px;",
+              
+              # WT Excel
+              tags$a(
+                href = "data/Reaction_Biology_WT_Kinases_Info.xlsx",
+                download = "Reaction_Biology_WT_Kinases_Info.xlsx",
+                class = "dl-btn",
+                style = "display: block; margin-bottom: 10px; text-decoration: underline; font-size: 16px; color: #0056b3;",
+                HTML("Download: Wild-Type Kinases Assay Metadata (.xlsx)")
+              ),
+              
+              # Mutation/Variant Excel
+              tags$a(
+                href = "data/Reaction_Biology_Mutation_Kinases_Assay_Info.xlsx",
+                download = "Reaction_Biology_Mutation_Kinases_Assay_Info.xlsx",
+                class = "dl-btn",
+                style = "display: block; text-decoration: underline; font-size: 16px; color: #0056b3;",
+                HTML("Download: Mutation/Variant Kinases Assay Metadata (.xlsx)")
+              )
+            )
+          ),
+          
+          
+          # How to read the visuals
+          tags$details(
+            tags$summary("How to Read the Visuals"),
+            tags$br(),
+            tags$ul(
+              tags$li(HTML("<b>Inhibition (%):</b> Higher is better and equals <code>100 − residual activity</code> at 1 μM.")),
+              tags$li(HTML("<b>Radar Plot:</b> Each spoke is a candidate drug; longer spokes = greater inhibition. The concentric guides (≤25/50/75/100%) help judge magnitude quickly.")),
+              tags$li(HTML("<b>KISS Score (concept):</b> Balances on-target effect (geometric-mean inhibition on the chosen kinase set) against off-target burden. Use alongside % inhibition to find selective, potent options.")),
+              tags$li(HTML("<b>Gini Selectivity:</b> Higher suggests more selective inhibition profile across kinases."))
+            )
+          ),
+          
+          # Tips & troubleshooting
+          tags$details(
+            tags$summary("Tips, Caveats, and Troubleshooting"),
+            tags$br(),
+            tags$ul(
+              tags$li(HTML("<b>Search strategy:</b> Prefer exact names first (e.g., <code>MAPK14</code>) before abbreviations. For variants, include mutation (e.g., <code>V600E</code>) or fusion tag.")),
+              tags$li(HTML("<b>Dual-target logic:</b> By default, the app intersects top-ranked lists per target; if the intersection seems too strict, try each target separately to see near-misses.")),
+              tags$li(HTML("<b>Units:</b> Inhibition values are computed at 1 μM experimental dose.")),
+              tags$li(HTML("<b>Downloads:</b> Look for the <i>Download Table</i> and <i>Download Plot</i> buttons below each output.")),
+              tags$li(HTML("<b>Empty/NA results:</b> If no values appear, try a different spelling or a broader kinase family member (paralog)."))
+            )
+          ),
+          
+          # Acknowledgments and citation
+          tags$div(class = "sep"),
+          tags$p(HTML(
+            "<b>Please cite:</b> Saifudeen et&nbsp;al., 2025. <i>Comprehensive Profiling of Clinical Kinase Inhibitors Reveals Opportunities for Drug Repurposing and Uncovering New Biology.</i>"
+          )),
+          tags$p(HTML(
+            "<i>Note:</i> Kinase inhibition data are the property of Reaction Biology Corporation. Proper acknowledgment is required for download/use/publication. For questions: <a href='mailto:info@reactionbiology.com'>info@reactionbiology.com</a>."
+          ))
         )
       ),
       
@@ -285,6 +493,17 @@ server <- function(input, output, session) {
     active_app() != ""
   })
   outputOptions(output, "app_active", suspendWhenHidden = FALSE)
+  
+  # Go "home" when title or logo clicked
+  observeEvent(input$home_title, {
+    active_app("")    # reset app state
+    shinyjs::show("gif_section")  # show landing GIFs again
+  })
+  
+  observeEvent(input$home_logo, {
+    active_app("")    # reset app state
+    shinyjs::show("gif_section")
+  })
   
   # UI output for the selected app
   output$app_ui <- renderUI({
@@ -332,14 +551,29 @@ server <- function(input, output, session) {
               options = list(placeholder = 'Select kinase mutation in combination with above (optional)...')
             ),
             
+            # tags$div(
+            #   style = "margin-top: 20px; padding: 10px; border: 1px solid #ddd; background-color: white;",
+            #   tags$h4(div(HTML('<b>User Instructions:</b>'), style = "text-align: left; color:steelblue; font-size: 20px;")),
+            #   tags$ol(
+            #     tags$li(div(HTML("<b> Select a specific mutant kinase </b> for which you would like to identify an FDA-approved inhibitor (e.g., BRAF V600E, FGFR2 fusions, ALK fusions), then search for approved drugs that effectively target this mutation.")), style = "font-size: 15px;"),
+            #     HTML("<br>"),
+            #     tags$li(div(HTML("<b> (Optional) </b> Select an additional mutation to find FDA-approved drugs that inhibit the combination of mutations. If none, leave this blank.")), style = "font-size: 15px;"),
+            #     tags$hr()
+            #   )
+            # ),
+            
+            # Download link for Mutant Assay Metadata
             tags$div(
-              style = "margin-top: 20px; padding: 10px; border: 1px solid #ddd; background-color: white;",
-              tags$h4(div(HTML('<b>User Instructions:</b>'), style = "text-align: left; color:steelblue; font-size: 20px;")),
-              tags$ol(
-                tags$li(div(HTML("<b> Select a specific mutant kinase </b> for which you would like to identify an FDA-approved inhibitor (e.g., BRAF V600E, FGFR2 fusions, ALK fusions), then search for approved drugs that effectively target this mutation.")), style = "font-size: 15px;"),
-                HTML("<br>"),
-                tags$li(div(HTML("<b> (Optional) </b> Select an additional mutation to find FDA-approved drugs that inhibit the combination of mutations. If none, leave this blank.")), style = "font-size: 15px;"),
-                tags$hr()
+              style = "margin-top: 10px; padding: 10px; border: 1px solid #ddd; background-color: white;",
+              tags$p(
+                HTML("<b>Assay Metadata:</b> Download the Reaction Biology Mutant/Variant Kinases assay setup (expression system, tag, substrate, domain info)."),
+                style = "font-size: 14px; color: black;"
+              ),
+              tags$a(
+                href = "data/Reaction_Biology_Mutation_Kinases_Info.xlsx",
+                download = "Reaction_Biology_Mutation_Kinases_Info.xlsx",
+                style = "margin-top: 6px; display: inline-block; text-decoration: underline; color: #0056b3; font-size: 14px;",
+                "Download Mutant Kinases Assay Metadata (.xlsx)"
               )
             ),
             
@@ -360,8 +594,8 @@ server <- function(input, output, session) {
             tags$div(
               style = "margin-top: 10px; padding: 10px; border: 1px solid #ddd; background-color: white;",
               tags$p(HTML("<i>Note: The kinase inhibition data presented here is the property of Reaction Biology Corporation. 
-      Recipients must properly acknowledge Reaction Biology Corporation when downloading, utilizing, 
-      and / or publishing these data. For questions, please contact <a href='mailto:info@reactionbiology.com'>info@reactionbiology.com</a>.</i>"), 
+          Recipients must properly acknowledge Reaction Biology Corporation when downloading, utilizing, 
+          and / or publishing these data. For questions, please contact <a href='mailto:info@reactionbiology.com'>info@reactionbiology.com</a>.</i>"), 
                      style = "font-size: 14px; color: grey; text-align: left;")
             ),
             
@@ -432,6 +666,21 @@ server <- function(input, output, session) {
               multiple = FALSE,
               selected = "None",
               options = list(placeholder = 'Select kinase in combination with above (optional)...')
+            ),
+            
+            # Download link for WT Assay Metadata
+            tags$div(
+              style = "margin-top: 10px; padding: 10px; border: 1px solid #ddd; background-color: white;",
+              tags$p(
+                HTML("<b>Assay Metadata:</b> Download the Reaction Biology Wild-Type Kinases assay setup (expression system, tag, substrate, domain info)."),
+                style = "font-size: 14px; color: black;"
+              ),
+              tags$a(
+                href = "data/Reaction_Biology_WT_Kinases_Info.xlsx",
+                download = "Reaction_Biology_WT_Kinases_Info.xlsx",
+                style = "margin-top: 6px; display: inline-block; text-decoration: underline; color: #0056b3; font-size: 14px;",
+                "Download Wild-Type Kinases Assay Metadata (.xlsx)"
+              )
             ),
             
             # Citation and Disclaimer Section
@@ -531,17 +780,18 @@ server <- function(input, output, session) {
               selected = NULL,
               options = list(placeholder = 'Select kinase of interest...')
             ),
-            tags$div(
-              style = "margin-top: 20px; padding: 10px; border: 1px solid #ddd; background-color: white;",
-              tags$h4(div(HTML('<b>User Instructions:</b>'), style = "text-align: left; color: steelblue; font-size: 20px;")),
-              tags$ol(
-                tags$li(div(HTML("<b> Select the kinase </b> for which you would like to see the important cancer lineages and sub-lineages. Additionally the user can obtain a plot of the KISS Score vs. Inhibition for the kinase to see which FDA Approved drugs best target this kinase"), style = "font-size: 15px;")),
-                tags$br(),
-                tags$li(div(HTML("<b>Note: 'Important Kinase' is defined </b> as  a kinase that has a gene effect score of less than -0.5 in a particular cancer lineage and its sub-lineages. These gene effect scores data is obtained from the <a href='https://depmap.org/portal/' target='_blank'>DepMap Portal website</a>."), style = "font-size: 15px;")),
-                tags$br(),
-                tags$hr()
-              )
-            ),
+            
+            # tags$div(
+            #   style = "margin-top: 20px; padding: 10px; border: 1px solid #ddd; background-color: white;",
+            #   tags$h4(div(HTML('<b>User Instructions:</b>'), style = "text-align: left; color: steelblue; font-size: 20px;")),
+            #   tags$ol(
+            #     tags$li(div(HTML("<b> Select the kinase </b> for which you would like to see the important cancer lineages and sub-lineages. Additionally the user can obtain a plot of the KISS Score vs. Inhibition for the kinase to see which FDA Approved drugs best target this kinase"), style = "font-size: 15px;")),
+            #     tags$br(),
+            #     tags$li(div(HTML("<b>Note: 'Important Kinase' is defined </b> as  a kinase that has a gene effect score of less than -0.5 in a particular cancer lineage and its sub-lineages. These gene effect scores data is obtained from the <a href='https://depmap.org/portal/' target='_blank'>DepMap Portal website</a>."), style = "font-size: 15px;")),
+            #     tags$br(),
+            #     tags$hr()
+            #   )
+            # ),
             
             # Citation and Disclaimer Section
             tags$div(
