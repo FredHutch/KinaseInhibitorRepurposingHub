@@ -199,10 +199,14 @@ ui <- fluidPage(
     
     # Title (centered, clickable to go "home")
     div(
-      actionLink(
-        inputId = "home_title",
-        label = HTML('<b>KIRHub: Kinase Inhibitor Repurposing Hub</b>'),
-        style = "font-size: 52px; color: steelblue; text-align: center; width: 100%; text-decoration: none;"
+      style = "text-align: left",
+      h1(
+        actionLink(
+          inputId = "home_title",
+          label = HTML("KIRHub: Kinase Inhibitor Repurposing Hub"),
+          style = "color: steelblue; text-decoration: none; cursor: pointer;"
+        ),
+        style = "font-size: 52px; font-weight: bold;"
       )
     ),
     
@@ -295,8 +299,17 @@ ui <- fluidPage(
       # ===== User Guide styles =====
       tags$style(HTML("
         /* User Guide styles */
-        #user_guide { max-width: 100%; margin: 40px auto 10px auto; padding: 18px 22px; 
-                      background: #ffffff; border: 1px solid #e6e6e6; border-radius: 6px; text-align: left; }
+        #user_guide { 
+          max-width: 100%; 
+          margin: 40px auto 10px auto; 
+          padding: 18px 22px; 
+          background: #ffffff; 
+          border-top: 2px solid #e6e6e6;   /* only top line */
+          border-left: none; 
+          border-right: none; 
+          border-bottom: none; 
+          text-align: left; 
+        }
         #user_guide h3 { margin-top: 0; color: #2b6ea6; font-size: 30px; font-weight: 800; }
         #user_guide h4 { color: #2b6ea6; margin-top: 18px; }
         #user_guide p, #user_guide li { font-size: 16px; line-height: 1.45; }
@@ -321,7 +334,7 @@ ui <- fluidPage(
           
           # One-paragraph overview
           tags$p(HTML(
-            "KIRHub is a browser-based platform for exploring profiling data of clinically approved kinase inhibitors. 
+            "KIRHub is a browser-based platform for exploring activity profiling data of clinically approved kinase inhibitors. 
        It provides three interactive modules: 
        <b>(i)</b> identifying drug(s) to inhibit <b>wild-type</b> kinases, 
        <b>(ii)</b> identifying drug(s) to inhibit <b>mutant</b> kinases, and 
@@ -338,9 +351,9 @@ ui <- fluidPage(
             open = TRUE,
             tags$summary("Quick Start  ", tags$span(class = "pill", "Recommended")),
             tags$ol(
-              tags$li(HTML("<b>Choose a module:</b> Use the three large buttons on the left sidebar to open <b>Wild-Type Kinases</b>, <b>Mutant Kinases</b>, or <b>Cancer Lineages</b>.")),
-              tags$li(HTML("<b>Search/select:</b> Start typing a kinase/mutation; the list filters dynamically. Exact matches are best (e.g., <code>MAPK14</code>; <code>BRAF V600E</code>; <code>FGFR2 fusion</code>).")),
-              tags$li(HTML("<b>Review ranked drugs:</b> The table shows the top candidates by % inhibition (and selectivity via Gini). Use column headers to sort; use the download button to export results.")),
+              tags$li(HTML("<b>Choose a module:</b> Use the three large buttons on the top of the app to open either <b>Wild-Type Kinases</b>, <b>Mutant Kinases</b>, or <b>Cancer Lineages</b>.")),
+              tags$li(HTML("<b>Search/select:</b> Start typing a kinase/mutation; the list filters dynamically. Exact matches are best (e.g., <code>ABL1</code>; <code>BRAF(V600D)</code>; <code>FGFR1OP/FGFR1</code>).")),
+              tags$li(HTML("<b>Review ranked drugs:</b> The table shows the top candidates by % inhibition (and selectivity via Gini Scores). Use column headers to sort; use the download button to export results.")),
               tags$li(HTML("<b>Open visuals:</b> Radar plots display per-drug inhibition distribution; KISS vs Inhibition scatters highlight drugs balancing on-target inhibition and off-target burden.")),
               tags$li(HTML("<b>Dual targets (optional):</b> Add a second kinase/mutation to see drugs that score highly for both (intersection of top candidates)."))
             )
@@ -350,12 +363,12 @@ ui <- fluidPage(
           tags$details(
             tags$summary("Module 1 — Identifying Drug(s) to Inhibit Wild-Type Kinases"),
             tags$br(),
-            tags$p("Goal: Prioritize inhibitors for a wild-type kinase (or paralog pair)."),
+            tags$p("Goal: Prioritize inhibitors for a wild-type kinase (or dual kinase or paralog pair)."),
             tags$ol(
-              tags$li("Select a kinase (e.g., MAPK14, CDK4, AURKA)."),
+              tags$li("Select a kinase (e.g., P38A/MAPK14, ABL2/ARG, AURKA)."),
               tags$li("Optionally select a second kinase/paralog to co-prioritize."),
               tags$li(HTML("Review ranked drugs by % inhibition and Gini. Download table as CSV; download Radar/KISS figures as PNG.")),
-              tags$li(HTML("<b>KISS vs Inhibition</b>: Points in the upper-right (higher KISS and higher % inhibition) are favorable."))
+              tags$li(HTML("KISS vs Inhibition: Points in the upper-right (higher KISS and higher % inhibition) are favorable."))
             )
           ),
           
@@ -365,9 +378,9 @@ ui <- fluidPage(
             tags$br(),
             tags$p("Goal: Find clinically approved inhibitors with high inhibition for a selected mutant kinase (optionally a combination)."),
             tags$ol(
-              tags$li(HTML("Select a mutant (e.g., <code>BRAF V600E</code>, <code>ALK fusion</code>, <code>FGFR2 fusion</code>).")),
+              tags$li(HTML("Select a mutant (e.g., <code>BRAF(V599E)</code>, <code>ALK/TFG Fusion</code>, <code>FGFR1(V561M)</code>).")),
               tags$li("Optionally select a second mutant to prioritize drugs effective on both."),
-              tags$li(HTML("Interpret the table: <b>Inhibition (%)</b> is computed as <code>100 − residual activity</code> at 1 μM. <b>Gini</b> approximates selectivity (higher is more selective).")),
+              tags$li(HTML("Interpret the table: <b>Inhibition (%)</b> is computed as <code>100 − residual activity</code> at 1 μM. Gini approximates selectivity (higher is more selective).")),
               tags$li("Use the download button to export ranked results (CSV)."),
               tags$li("Open Radar Plot(s) for a quick visual of drug inhibition patterns across candidates.")
             )
@@ -377,14 +390,18 @@ ui <- fluidPage(
           tags$details(
             tags$summary("Module 3 — Exploring Kinase Essentiality Across Cancer Lineages"),
             tags$br(),
-            tags$p("Goal: See where a kinase is essential across primary and nested lineages (DepMap-derived)."),
+            tags$p(HTML(
+              "Goal: See where a kinase is essential across primary and nested lineages (DepMap-derived). 
+               “Essential” is a kinase that has a gene effect score of less than -0.5 in a particular cancer lineage and its sub-lineages. 
+               These gene effect scores data are obtained from the <a href='https://depmap.org/portal/' target='_blank'>DepMap Portal website</a>."
+            )),
             tags$ol(
               tags$li("Select a kinase; the table lists lineage counts and percentages where it’s essential."),
               tags$li("Use the bar chart to compare total essential counts by Lineage 1."),
               tags$li("Export the table or bar chart (CSV/PNG).")
             )
           ),
-          tags$p(HTML("<i>Note:</i> “Important/essential” is based on gene effect thresholds (e.g., &lt; −0.5) in DepMap lineages.")),
+          tags$br(),
           
           # Assay Metadata (Reaction Biology) — Reviewer-requested context + Download links
           tags$details(
@@ -393,10 +410,9 @@ ui <- fluidPage(
             tags$p(HTML(
               "These files describe assay setup for each kinase used in biochemical profiling: 
               whether the <b>full-length protein</b> or a <b>domain fragment</b> (with residue range when available) was assayed; 
-              the <b>expression system</b> (e.g., baculovirus/Sf21) and <b>affinity tag</b> (e.g., His/GST); and the <b>general substrate</b> (e.g., Abltide, Crosstide, Casein).
-              This context addresses reviewer concerns about regulatory domains affecting activity/folding and substrate choice shaping readouts."
+              the <b>expression system</b> (e.g., baculovirus/Sf21) and <b>affinity tag</b> (e.g., His/GST); and the <b>general substrate</b> (e.g., Abltide, Crosstide, Casein+Mn, etc.).
+              This context addresses concerns about regulatory domains affecting activity/folding and substrate choice shaping readouts."
             )),
-            
             
             tags$div(
               style = "margin-top: 6px;",
@@ -428,9 +444,9 @@ ui <- fluidPage(
             tags$br(),
             tags$ul(
               tags$li(HTML("<b>Inhibition (%):</b> Higher is better and equals <code>100 − residual activity</code> at 1 μM.")),
-              tags$li(HTML("<b>Radar Plot:</b> Each spoke is a candidate drug; longer spokes = greater inhibition. The concentric guides (≤25/50/75/100%) help judge magnitude quickly.")),
-              tags$li(HTML("<b>KISS Score (concept):</b> Balances on-target effect (geometric-mean inhibition on the chosen kinase set) against off-target burden. Use alongside % inhibition to find selective, potent options.")),
-              tags$li(HTML("<b>Gini Selectivity:</b> Higher suggests more selective inhibition profile across kinases."))
+              tags$li(HTML("<b>Radar Plot:</b> Each spoke is a candidate drug; longer spokes = greater inhibition. The concentric inhibition guides (≤25/50/75/100%) help judge magnitude quickly.")),
+              tags$li(HTML("<b>KISS Score:</b> Balances on-target effect (geometric-mean inhibition on the chosen kinase set) against off-target burden. Use alongside % inhibition to find selective, potent options.")),
+              tags$li(HTML("<b>Gini Score:</b> Higher score suggests more selective inhibition profile across kinases."))
             )
           ),
           
@@ -439,7 +455,7 @@ ui <- fluidPage(
             tags$summary("Tips, Caveats, and Troubleshooting"),
             tags$br(),
             tags$ul(
-              tags$li(HTML("<b>Search strategy:</b> Prefer exact names first (e.g., <code>MAPK14</code>) before abbreviations. For variants, include mutation (e.g., <code>V600E</code>) or fusion tag.")),
+              tags$li(HTML("<b>Search strategy:</b> Prefer exact names first (e.g., <code>P38A/MAPK14</code>) before abbreviations. For variants, include mutation (e.g., <code>BRAF(V599E)</code>) or '/' fusion tag.")),
               tags$li(HTML("<b>Dual-target logic:</b> By default, the app intersects top-ranked lists per target; if the intersection seems too strict, try each target separately to see near-misses.")),
               tags$li(HTML("<b>Units:</b> Inhibition values are computed at 1 μM experimental dose.")),
               tags$li(HTML("<b>Downloads:</b> Look for the <i>Download Table</i> and <i>Download Plot</i> buttons below each output.")),
