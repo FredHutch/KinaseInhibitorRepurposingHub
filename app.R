@@ -133,7 +133,7 @@ radar_plot_for_kinases <- function(wild_df, kinase, input_kinase) {
   values <- 100 - wild_df[[kinase]]
   values <- c(values, values[1])
   
-  par(mar = rep(1, 4)) 
+  par(mar = rep(2, 4)) 
   plot.new() 
   plot.window(xlim = c(-1.1, 1.1), ylim = c(-1.1, 1.1), asp = 1)
   
@@ -634,7 +634,7 @@ server <- function(input, output, session) {
             # Radar plot UI - Shows 1 or 2 radar plots based on selected kinases
             conditionalPanel(
               condition = "input.first_mutation != ''",
-              plotOutput("radarPlot1", height = "600px"),
+              plotOutput("radarPlot1", height = "600px", width = "100%"),
               tags$br(),
               downloadButton("downloadRadarPlot1", "Download Radar Plot 1 (.png)"),
               tags$hr()
@@ -642,7 +642,7 @@ server <- function(input, output, session) {
             
             conditionalPanel(
               condition = "input.second_mutation != '' && input.second_mutation != 'None'",
-              plotOutput("radarPlot2", height = "600px"),
+              plotOutput("radarPlot2", height = "600px", width = "100%"),
               tags$br(),
               downloadButton("downloadRadarPlot2", "Download Radar Plot 2 (.png)"),
               tags$hr()
@@ -740,7 +740,7 @@ server <- function(input, output, session) {
             # Radar plot UI - Shows 1 or 2 radar plots based on selected kinases
             conditionalPanel(
               condition = "input.first_mutation != ''",
-              plotOutput("radarPlot1", height = "600px"),
+              plotOutput("radarPlot1", height = "600px", width = "100%"),
               tags$br(),
               downloadButton("downloadRadarPlot1", "Download Radar Plot 1 (.png)"),
               tags$hr()
@@ -748,7 +748,7 @@ server <- function(input, output, session) {
             
             conditionalPanel(
               condition = "input.second_mutation != '' && input.second_mutation != 'None'",
-              plotOutput("radarPlot2", height = "600px"),
+              plotOutput("radarPlot2", height = "600px", width = "100%"),
               tags$br(),
               downloadButton("downloadRadarPlot2", "Download Radar Plot 2 (.png)"),
               tags$hr()
@@ -757,7 +757,7 @@ server <- function(input, output, session) {
             # KISS Score Scatter Plots - Shows 1 or 2 plots based on selected kinases
             conditionalPanel(
               condition = "input.first_mutation != ''",
-              plotOutput("kissPlot1", height = "600px"),
+              plotOutput("kissPlot1", height = "600px", width = "100%"),
               tags$br(),
               downloadButton("downloadKissPlot1", "Download KISS Plot 1 (.png)"),
               tags$hr()
@@ -765,7 +765,7 @@ server <- function(input, output, session) {
             
             conditionalPanel(
               condition = "input.second_mutation != '' && input.second_mutation != 'None'",
-              plotOutput("kissPlot2", height = "600px"),
+              plotOutput("kissPlot2", height = "600px", width = "100%"),
               tags$br(),
               downloadButton("downloadKissPlot2", "Download KISS Plot 2 (.png)"),
               tags$hr()
@@ -1119,7 +1119,7 @@ server <- function(input, output, session) {
       output$downloadRadarPlot1 <- downloadHandler(
         filename = function() { paste(input$first_mutation, "_radar_plot.png", sep = "") },
         content = function(file) {
-          png(file, width = 800, height = 800, res = 150)
+          png(file, width = 1000, height = 1000, res = 150)
           radar_plot_for_kinases(mutant_wild_kinases, input$first_mutation, input$first_mutation)
           dev.off()
         }
@@ -1129,7 +1129,7 @@ server <- function(input, output, session) {
         filename = function() { paste(input$second_mutation, "_radar_plot.png", sep = "") },
         content = function(file) {
           if (is.null(input$second_mutation) || input$second_mutation == "None") return(NULL)
-          png(file, width = 800, height = 800, res = 150)
+          png(file, width = 1000, height = 1000, res = 150)
           radar_plot_for_kinases(mutant_wild_kinases, input$second_mutation, input$second_mutation)
           dev.off()
         }
@@ -1350,7 +1350,7 @@ server <- function(input, output, session) {
       output$downloadRadarPlot1 <- downloadHandler(
         filename = function() { paste(input$first_mutation, "_radar_plot.png", sep = "") },
         content = function(file) {
-          png(file, width = 800, height = 800, res = 150)
+          png(file, width = 1000, height = 1000, res = 150)
           radar_plot_for_kinases(mutant_wild_kinases, input$first_mutation, input$first_mutation)
           dev.off()
         }
@@ -1360,7 +1360,7 @@ server <- function(input, output, session) {
         filename = function() { paste(input$second_mutation, "_radar_plot.png", sep = "") },
         content = function(file) {
           if (is.null(input$second_mutation) || input$second_mutation == "None") return(NULL)
-          png(file, width = 800, height = 800, res = 150)
+          png(file, width = 1000, height = 1000, res = 150)
           radar_plot_for_kinases(mutant_wild_kinases, input$second_mutation, input$second_mutation)
           dev.off()
         }
@@ -1388,7 +1388,7 @@ server <- function(input, output, session) {
             geom_text(
               data = data1 %>% top_n(3, wt = KISS),
               aes(label = Compound),
-              vjust = 0.3, hjust = -0.05, fontface = "bold", size = 6
+              vjust = -0.5, hjust = 0.9, fontface = "bold", size = 6
             )
         }
       })
@@ -1415,7 +1415,7 @@ server <- function(input, output, session) {
             geom_text(
               data = data2 %>% top_n(3, wt = KISS),
               aes(label = Compound),
-              vjust = 0.3, hjust = -0.05, fontface = "bold", size = 6
+              vjust = -0.5, hjust = 0.9, fontface = "bold", size = 6
             ) 
         }
       })
@@ -1443,10 +1443,10 @@ server <- function(input, output, session) {
             geom_text(
               data = data1 %>% top_n(3, wt = KISS),
               aes(label = Compound),
-              vjust = 0.3, hjust = -0.05, fontface = "bold", size = 6
+              vjust = -0.5, hjust = 0.9, fontface = "bold", size = 6
             )
           
-          ggsave(file, plot = p, device = "png", width = 8, height = 6, dpi = 150)
+          ggsave(file, plot = p, device = "png", width = 12, height = 8, dpi = 150)
         }
       )
       
@@ -1475,10 +1475,10 @@ server <- function(input, output, session) {
             geom_text(
               data = data2 %>% top_n(3, wt = KISS),
               aes(label = Compound),
-              vjust = 0.3, hjust = -0.05, fontface = "bold", size = 6
+              vjust = -0.5, hjust = 0.9, fontface = "bold", size = 6
             )
           
-          ggsave(file, plot = p, device = "png", width = 8, height = 6, dpi = 150)
+          ggsave(file, plot = p, device = "png", width = 12, height = 8, dpi = 150)
         }
       )
       
