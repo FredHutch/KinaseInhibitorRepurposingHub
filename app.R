@@ -19,6 +19,7 @@ mutant_wild_kinases[is.na(mutant_wild_kinases)] <- 100
 # --- mutant_wild_kinases colnames cleanup ---
 column_choices <- sub("\\.", "(", colnames(mutant_wild_kinases))
 column_choices <- gsub("\\.", ")", column_choices)
+
 # default: replace _ with /
 column_choices <- gsub("_", "/", column_choices)
 
