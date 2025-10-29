@@ -1,4 +1,4 @@
-version: '3.3'
+version: "3.3"
 services:
   kirhub:
     image: sc-registry.fredhutch.org/kirhub:latest
@@ -9,13 +9,10 @@ services:
         condition: on-failure
       labels:
         - "traefik.enable=true"
-        - "traefik.http.routers.kirhub.middlewares=kirhubauth"
-        - "traefik.http.routers.kirhub-secured.middlewares=kirhubauth"
-        - "traefik.http.middlewares.kirhubauth.basicauth.users=testuser:$$2y$$12$$ci.4U63YX83CwkyUrjqxAucnmi2xXOIlEF6T/KdP9824f1Rf1iyNG,msaifude:$$apr1$$tXwNsJG.$$r0rMhMENwSrhbOJi5d2/Q1,kirhub:$$apr1$$7uriYjmA$$kybpBZyjVnnEWNVSvKQSs/"
         - "traefik.http.routers.kirhub.rule=Host(`kirhub.fredhutch.org`)"
         - "traefik.http.routers.kirhub-secured.rule=Host(`kirhub.fredhutch.org`)"
         - "traefik.http.routers.kirhub.entrypoints=web,web-secured"
-        - "traefik.http.services.kirhub.loadbalancer.server.port=3838" # it seems you always need to give traefik a port so it 'notices' the service
+        - "traefik.http.services.kirhub.loadbalancer.server.port=3838"
         - "traefik.http.routers.kirhub.tls=true"
 
 networks:
