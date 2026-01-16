@@ -6,6 +6,44 @@ library(gridExtra)
 library(DT)
 library(tidyr)
 library(plotly)
+library(shinyjs)
+library(jsonlite)
+
+CITATION_TEXT <- "Saifudeen et al., 2025. Comprehensive Profiling of Clinical Kinase Inhibitors Reveals Opportunities for Drug Repurposing and Uncovering New Biology. Nat Biotech. Accepted. 2026."
+
+CITATION_HTML <- "
+Saifudeen <i>et&nbsp;al.</i>, 2025.
+<i>Comprehensive Profiling of Clinical Kinase Inhibitors Reveals Opportunities for Drug Repurposing and Uncovering New Biology.</i>
+<i>Nat Biotech. Accepted. 2026</i>
+"
+
+citation_block <- function(button_id, homepage = FALSE) {
+  tags$div(
+    style = paste(
+      "font-family: Arial, sans-serif;",
+      "font-size: 14px;",        # force everything inside
+      "color: #333;",
+      if (homepage) "margin-bottom: 18px;" else "margin-top: 6px;"
+    ),
+    
+    tags$div(
+      HTML(CITATION_HTML),
+      style = "margin-bottom: 6px; line-height: 1.45;"
+    ),
+    
+    actionButton(
+      inputId = button_id,
+      label = "Copy citation",
+      icon = icon("copy"),
+      style = paste(
+        "font-size: 13px;",
+        "padding: 4px 10px;",
+        "margin-top: 2px;",
+        if (homepage) "margin-bottom: 18px;" else ""
+      )
+    )
+  )
+}
 
 addResourcePath("/assets", file.path(getwd(), "www"))
 addResourcePath("data",   file.path(getwd(), "data_folder"))
@@ -186,6 +224,8 @@ radar_plot_for_kinases <- function(wild_df, kinase, input_kinase) {
 
 # UI for merged app
 ui <- fluidPage(
+  useShinyjs(),
+  
   # Custom style to remove background and box shadow
   tags$style(HTML("
     .container-fluid {
@@ -465,12 +505,67 @@ ui <- fluidPage(
           
           # Acknowledgments and citation
           tags$div(class = "sep"),
-          tags$p(HTML(
-            "<b>Please cite:</b> Saifudeen et&nbsp;al., 2025. <i>Comprehensive Profiling of Clinical Kinase Inhibitors Reveals Opportunities for Drug Repurposing and Uncovering New Biology.</i>"
-          )),
-          tags$p(HTML(
-            "<i>Note:</i> Kinase inhibition data are the property of Reaction Biology Corporation. Proper acknowledgment is required for download/use/publication. For questions: <a href='mailto:info@reactionbiology.com'>info@reactionbiology.com</a>."
-          ))
+          
+          # --- Citation instruction ---
+          tags$p(
+            HTML("<b>Please cite the following publication for use of this tool:</b>"),
+            style = "font-size: 16px; color: #333; margin-bottom: 6px;"
+          ),
+          
+          # --- Citation + inline copy button ---
+          tags$div(
+            style = "display: flex; align-items: center; gap: 10px; font-size: 16px; color: #333;",
+            
+            tags$div(
+              HTML(CITATION_HTML),
+              style = "line-height: 1.45;"
+            ),
+            
+            actionButton(
+              "copy_citation_home",
+              "Copy",
+              icon = icon("copy"),
+              style = "font-size: 12px; padding: 3px 8px;"
+            )
+          ),
+          
+          # --- Learn more section ---
+          tags$div(class = "sep"),
+          
+          tags$h4(
+            "Learn more",
+            style = "color: #2b6ea6; font-size: 20px; font-weight: 700; margin-bottom: 6px;"
+          ),
+          
+          tags$p(
+            HTML(
+              "To learn more about the kinase inhibitor profiling efforts in the <b>Gujral Lab</b>, 
+     including the network pharmacology approaches underlying this resource, see 
+     <a href='https://research.fredhutch.org/gujral/en/network-pharmacology.html' target='_blank'>
+     here</a>."
+            ),
+            style = "font-size: 16px; line-height: 1.45; margin-bottom: 6px;"
+          ),
+          
+          tags$p(
+            HTML(
+              "To learn how these insights are being applied to rare cancers through functional precision oncology, 
+     visit <b>TRACER</b>: 
+     <a href='https://rarecancerprogram.com' target='_blank'>
+     https://rarecancerprogram.com</a>."
+            ),
+            style = "font-size: 16px; line-height: 1.45;"
+          ),
+          
+          # --- Reaction Biology note (moved to last) ---
+          tags$p(
+            HTML(
+              "<i>Note:</i> Kinase inhibition data are the property of Reaction Biology Corporation. 
+    Proper acknowledgment is required for download/use/publication. 
+    For questions: <a href='mailto:info@reactionbiology.com'>info@reactionbiology.com</a>."
+            ),
+            style = "font-size: 16px; color: #333; line-height: 1.45; margin-top: 12px;"
+          )
         )
       ),
       
@@ -482,6 +577,47 @@ ui <- fluidPage(
 
 # Server logic for merged app
 server <- function(input, output, session) {
+  
+  observe({
+    lapply(
+      c("copy_citation_home",
+        "copy_citation_mutation",
+        "copy_citation_wild",
+        "copy_citation_lineage"),
+      function(id) {
+        observeEvent(input[[id]], {
+          req(input[[id]])
+          
+          shinyjs::runjs(sprintf("
+        var text = %s;
+
+        var textarea = document.createElement('textarea');
+        textarea.value = text;
+        textarea.style.position = 'fixed';
+        textarea.style.top = '0';
+        textarea.style.left = '0';
+        textarea.style.opacity = '0';
+
+        document.body.appendChild(textarea);
+        textarea.focus();
+        textarea.select();
+
+        try {
+          var successful = document.execCommand('copy');
+          if (!successful) {
+            alert('Copy failed. Please copy manually.');
+          }
+        } catch (err) {
+          alert('Copy failed. Please copy manually.');
+        }
+
+        document.body.removeChild(textarea);
+      ", jsonlite::toJSON(CITATION_TEXT)))
+          
+        }, ignoreInit = TRUE)
+      }
+    )
+  })
   
   # Reactive values to keep track of which app is active
   active_app <- reactiveVal("")
@@ -598,8 +734,7 @@ server <- function(input, output, session) {
               style = "margin-top: 10px; padding: 10px; border: 1px solid #ddd; background-color: white;",
               tags$p(HTML("<b>Please cite the following publication for use of this tool:</b>"), 
                      style = "font-size: 14px; color: black;"),
-              tags$p(HTML("Saifudeen et al., (2025). Comprehensive Profiling of Clinical Kinase Inhibitors Reveals Opportunities for Drug Repurposing and Uncovering New Biology."), 
-                     style = "font-size: 14px; color: black;"),
+              citation_block("copy_citation_mutation"),
               tags$hr(),
               tags$p(HTML("<i>Disclaimer: This application should not be considered, or used as a substitute for, medical advice, diagnosis or treatment. 
       This site does not constitute the practice of any medical, nursing or other professional health care advice, diagnosis or treatment.</i>"), 
@@ -704,8 +839,7 @@ server <- function(input, output, session) {
               style = "margin-top: 10px; padding: 10px; border: 1px solid #ddd; background-color: white;",
               tags$p(HTML("<b>Please cite the following publication for use of this tool:</b>"), 
                      style = "font-size: 14px; color: black;"),
-              tags$p(HTML("Saifudeen et al., (2025). Comprehensive Profiling of Clinical Kinase Inhibitors Reveals Opportunities for Drug Repurposing and Uncovering New Biology."), 
-                     style = "font-size: 14px; color: black;"),
+              citation_block("copy_citation_mutation"),
               tags$hr(),
               tags$p(HTML("<i>Disclaimer: This application should not be considered, or used as a substitute for, medical advice, diagnosis or treatment. 
       This site does not constitute the practice of any medical, nursing or other professional health care advice, diagnosis or treatment.</i>"), 
@@ -814,8 +948,7 @@ server <- function(input, output, session) {
               style = "margin-top: 10px; padding: 10px; border: 1px solid #ddd; background-color: white;",
               tags$p(HTML("<b>Please cite the following publication for use of this tool:</b>"), 
                      style = "font-size: 14px; color: black;"),
-              tags$p(HTML("Saifudeen et al., (2025). Comprehensive Profiling of Clinical Kinase Inhibitors Reveals Opportunities for Drug Repurposing and Uncovering New Biology."), 
-                     style = "font-size: 14px; color: black;"),
+              citation_block("copy_citation_mutation"),
               tags$hr(),
               tags$p(HTML("<i>Disclaimer: This application should not be considered, or used as a substitute for, medical advice, diagnosis or treatment. 
       This site does not constitute the practice of any medical, nursing or other professional health care advice, diagnosis or treatment.</i>"), 
