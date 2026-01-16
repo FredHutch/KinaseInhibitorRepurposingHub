@@ -586,34 +586,50 @@ server <- function(input, output, session) {
           req(input[[id]])
           
           shinyjs::runjs(sprintf("
-        var text = %s;
+        (function() {
+          var text = %s;
 
-        var textarea = document.createElement('textarea');
-        textarea.value = text;
-        textarea.style.position = 'fixed';
-        textarea.style.top = '0';
-        textarea.style.left = '0';
-        textarea.style.opacity = '0';
-
-        document.body.appendChild(textarea);
-        textarea.focus();
-        textarea.select();
-
-        try {
-          var successful = document.execCommand('copy');
-          if (!successful) {
-            alert('Copy failed. Please copy manually.');
+          // Try modern Clipboard API first (mobile-friendly)
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(function() {
+              console.log('Citation copied (clipboard API)');
+            }).catch(function(err) {
+              console.warn('Clipboard API failed, falling back', err);
+              fallbackCopy(text);
+            });
+          } else {
+            fallbackCopy(text);
           }
-        } catch (err) {
-          alert('Copy failed. Please copy manually.');
-        }
 
-        document.body.removeChild(textarea);
+          function fallbackCopy(text) {
+            var textarea = document.createElement('textarea');
+            textarea.value = text;
+            textarea.setAttribute('readonly', '');
+            textarea.style.position = 'fixed';
+            textarea.style.top = '0';
+            textarea.style.left = '0';
+            textarea.style.opacity = '0';
+
+            document.body.appendChild(textarea);
+            textarea.focus();
+            textarea.select();
+
+            try {
+              document.execCommand('copy');
+              console.log('Citation copied (fallback)');
+            } catch (err) {
+              alert('Copy failed. Please select and copy manually.');
+            }
+
+            document.body.removeChild(textarea);
+          }
+        })();
       ", jsonlite::toJSON(CITATION_TEXT)))
           
         }, ignoreInit = TRUE)
       }
     )
+    
   })
   
   # Reactive values to keep track of which app is active
