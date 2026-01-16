@@ -9,10 +9,10 @@ library(plotly)
 library(shinyjs)
 library(jsonlite)
 
-CITATION_TEXT <- "Saifudeen et al., 2025. Comprehensive Profiling of Clinical Kinase Inhibitors Reveals Opportunities for Drug Repurposing and Uncovering New Biology. Nat Biotech. Accepted. 2026."
+CITATION_TEXT <- "Saifudeen et al., 2026. Comprehensive Profiling of Clinical Kinase Inhibitors Reveals Opportunities for Drug Repurposing and Uncovering New Biology. Nat Biotech. Accepted. 2026."
 
 CITATION_HTML <- "
-Saifudeen <i>et&nbsp;al.</i>, 2025.
+Saifudeen <i>et&nbsp;al.</i>, 2026.
 <i>Comprehensive Profiling of Clinical Kinase Inhibitors Reveals Opportunities for Drug Repurposing and Uncovering New Biology.</i>
 <i>Nat Biotech. Accepted. 2026</i>
 "
@@ -540,8 +540,7 @@ ui <- fluidPage(
           tags$p(
             HTML(
               "To learn more about the kinase inhibitor profiling efforts in the 
-     <a href='https://research.fredhutch.org/gujral/en/network-pharmacology.html' target='_blank'>
-     <b>Gujral Lab</b></a>, including the network pharmacology approaches underlying this resource."
+                Gujral Lab, including the network pharmacology approaches underlying this resource, please <b><a href='https://research.fredhutch.org/gujral/en/network-pharmacology.html' target='_blank'> click here </a></b>"
             ),
             style = "font-size: 16px; line-height: 1.45; margin-bottom: 6px;"
           ),
