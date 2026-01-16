@@ -539,10 +539,9 @@ ui <- fluidPage(
           
           tags$p(
             HTML(
-              "To learn more about the kinase inhibitor profiling efforts in the <b>Gujral Lab</b>, 
-     including the network pharmacology approaches underlying this resource, see 
+              "To learn more about the kinase inhibitor profiling efforts in the 
      <a href='https://research.fredhutch.org/gujral/en/network-pharmacology.html' target='_blank'>
-     here</a>."
+     <b>Gujral Lab</b></a>, including the network pharmacology approaches underlying this resource."
             ),
             style = "font-size: 16px; line-height: 1.45; margin-bottom: 6px;"
           ),
@@ -550,9 +549,7 @@ ui <- fluidPage(
           tags$p(
             HTML(
               "To learn how these insights are being applied to rare cancers through functional precision oncology, 
-     visit <b>TRACER</b>: 
-     <a href='https://rarecancerprogram.com' target='_blank'>
-     https://rarecancerprogram.com</a>."
+     visit <a href='https://rarecancerprogram.com' target='_blank'><b>TRACER</b></a>."
             ),
             style = "font-size: 16px; line-height: 1.45;"
           ),
