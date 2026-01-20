@@ -595,7 +595,7 @@ ui <- fluidPage(
               tags$li(HTML("<b>Column 1:</b> Compound (aliases in parentheses allowed; e.g. Lapatinib (GW572016))")),
               tags$li(HTML("<b>Column 2:</b> CAS (or other unique compound identifier; e.g. 231277-92-2)")),
               tags$li(HTML("<b>Column 3:</b> Dose (e.g. 0.5, 1uM; no spaces) in uM only")),
-              tags$li(HTML("<b>Columns 4+:</b> HGNC kinase names (all caps, no whitespace; e.g. AURKA, MAPK1, EGFR)")),
+              tags$li(HTML("<b>Columns 4+:</b> HGNC kinase names (all caps, no whitespace; e.g. AURKA, MAPK1, EGFR). Same for mutants; eg. FGFR3(V555M), EGFR(D746_750_C797S)")),
               tags$li(HTML("<b>Values:</b> Numeric residual activity values (0–100) or NA only, where 0 indicates complete inhibition and 100 indicates no inhibition relative to control.")),
               tags$li(HTML("<b>Characters:</b> Standard US keyboard characters only (e.g. use u instead of Greek μ)"))
             )
