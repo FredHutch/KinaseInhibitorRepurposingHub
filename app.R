@@ -490,6 +490,117 @@ ui <- fluidPage(
             )
           ),
           
+          
+          ## Submit a dataset to KIRHub
+          tags$details(
+            tags$summary(tags$b("Submit a New Dataset to KIRHub")),
+            tags$br(),
+            
+            tags$p(
+              HTML(
+                "If you have a kinase inhibition dataset or compound screen that you would like to see included in KIRHub, 
+       please follow the steps below."
+              )
+            ),
+            
+            tags$div(class = "sep"),
+            
+            ## ---- Step 1 ----
+            tags$h4(tags$b("Step 1 — Validate Dataset Format")),
+            
+            tags$p(
+              HTML(
+                "Upload a <b>.csv</b> or <b>.xlsx</b> file to check whether it matches the required KIRHub format. 
+       <b>No data are stored or analyzed automatically.</b>"
+              ),
+              style = "margin-bottom: 6px;"
+            ),
+            
+            fileInput(
+              "submission_file",
+              label = NULL,
+              accept = c(".csv", ".xlsx"),
+              width = "420px"
+            ),
+            
+            tags$div(style = "margin-top: 4px;"),
+            uiOutput("submission_status"),
+            uiOutput("submission_issues"),
+            
+            tags$div(style = "margin-top: 6px;"),
+            DTOutput("submission_preview"),
+            
+            tags$div(style = "margin-top: 6px;"),
+            downloadButton(
+              "download_submission_report",
+              "Download validation report",
+              style = "padding: 4px 10px; font-size: 13px;"
+            ),
+            
+            tags$div(class = "sep"),
+            
+            ## ---- Step 2 ----
+            tags$h4(tags$b("Step 2 — Contact the Authors to Submit a New Dataset")),
+            
+            tags$p(
+              HTML(
+                "Once your file passes validation, please submit it by contacting the authors directly either via email or using the citation link below. 
+       Include a short description of the dataset and its source."
+              ),
+              style = "margin-bottom: 6px;"
+            ),
+            
+            tags$a(
+              href = paste0(
+                "mailto:gujrallab@fredhutch.org?",
+                "subject=KIRHub Dataset Submission&",
+                "body=",
+                URLencode(
+                  paste(
+                    "Hello KIRHub team,",
+                    "",
+                    "I would like to submit a kinase inhibition dataset for inclusion in KIRHub.",
+                    "",
+                    "Dataset name:",
+                    "Source / citation or permission statement:",
+                    "File format:",
+                    "Notes:",
+                    "",
+                    "Thank you."
+                    , sep = "\n")
+                )
+              ),
+              class = "btn btn-primary",
+              style = "margin-top: 4px;",
+              "Email the KIRHub authors"
+            ),
+            
+            tags$br(),
+            tags$br(),
+            
+            ## ---- Citation ----
+            tags$p(
+              tags$b("Citation:"),
+              style = "margin-bottom: 6px;"
+            ),
+            
+            citation_block("copy_citation_home"),
+            
+            tags$div(class = "sep"),
+            
+            ## ---- Format summary ----
+            tags$h4(tags$b("Required File Format")),
+            
+            tags$ul(
+              tags$li(HTML("<b>Column 1:</b> Compound (aliases in parentheses allowed; e.g. Lapatinib (GW572016))")),
+              tags$li(HTML("<b>Column 2:</b> CAS (or other unique compound identifier; e.g. 231277-92-2)")),
+              tags$li(HTML("<b>Column 3:</b> Dose (e.g. 0.5uM, 1uM; no spaces)")),
+              tags$li(HTML("<b>Columns 4+:</b> HGNC kinase names (all caps, no whitespace; e.g. AURKA, MAPK1, EGFR)")),
+              tags$li(HTML("<b>Values:</b> Numeric residual activity values (0–100) or NA only, where 0 indicates complete inhibition and 100 indicates no inhibition relative to control.")),
+              tags$li(HTML("<b>Characters:</b> Standard US keyboard characters only (e.g. use u instead of Greek μ)"))
+            )
+          ),
+          
           # Tips & troubleshooting
           tags$details(
             tags$summary("Tips, Caveats, and Troubleshooting"),
@@ -574,6 +685,7 @@ ui <- fluidPage(
 # Server logic for merged app
 server <- function(input, output, session) {
   
+  ## Citation one
   observe({
     lapply(
       c("copy_citation_home",
@@ -629,6 +741,113 @@ server <- function(input, output, session) {
       }
     )
     
+  })
+  
+  
+  ## Submit data to KIRHub 
+  observeEvent(input$submission_file, {
+    
+    # Reset outputs on new upload
+    output$submission_status  <- renderUI(NULL)
+    output$submission_issues  <- renderUI(NULL)
+    output$submission_preview <- renderDT(NULL)
+    
+    req(input$submission_file)
+    
+    fname <- input$submission_file$name
+    path  <- input$submission_file$datapath
+    
+    ## ---- Reject legacy Excel (.xls) ----
+    if (grepl("\\.xls$", fname, ignore.case = TRUE)) {
+      output$submission_status <- renderUI(
+        tags$div(class = "alert alert-danger",
+                 "Invalid file type: .xls not supported. Please use .csv or .xlsx.")
+      )
+      return()
+    }
+    
+    ## ---- Read file ----
+    df <- tryCatch({
+      if (grepl("\\.csv$", fname, ignore.case = TRUE)) {
+        readr::read_csv(path, show_col_types = FALSE)
+      } else {
+        readxl::read_xlsx(path)
+      }
+    }, error = function(e) NULL)
+    
+    if (is.null(df)) {
+      output$submission_status <- renderUI(
+        tags$div(class = "alert alert-danger", "Could not read file.")
+      )
+      return()
+    }
+    
+    ## ---- Validation checks ----
+    issues <- character(0)
+    cn <- colnames(df)
+    
+    if (length(cn) < 4)
+      issues <- c(issues, "File must contain at least 4 columns.")
+    
+    if (cn[1] != "Compound")
+      issues <- c(issues, "Column 1 must be named 'Compound'.")
+    
+    if (cn[2] != "CAS")
+      issues <- c(issues, "Column 2 must be named 'CAS'.")
+    
+    if (cn[3] != "Dose")
+      issues <- c(issues, "Column 3 must be named 'Dose'.")
+    
+    if (length(cn) >= 4 && any(grepl("\\s", cn[4:length(cn)])))
+      issues <- c(issues, "Kinase column names must not contain whitespace.")
+    
+    txt <- paste(capture.output(write.csv(df, row.names = FALSE)), collapse = "")
+    if (any(charToRaw(txt) > as.raw(127)))
+      issues <- c(issues, "Non-ASCII characters detected (use standard US keyboard characters only).")
+    
+    ## ---- Status + issues ----
+    if (length(issues) == 0) {
+      output$submission_status <- renderUI(
+        tags$div(class = "alert alert-success",
+                 "File passed basic format validation.")
+      )
+    } else {
+      output$submission_status <- renderUI(
+        tags$div(class = "alert alert-warning",
+                 "File needs corrections before submission.")
+      )
+      
+      output$submission_issues <- renderUI(
+        tags$ul(lapply(issues, tags$li))
+      )
+    }
+    
+    ## ---- Preview ----
+    output$submission_preview <- renderDT({
+      DT::datatable(
+        head(df, 10),
+        options = list(scrollX = TRUE),
+        rownames = FALSE
+      )
+    })
+    
+    ## ---- Validation report download ----
+    output$download_submission_report <- downloadHandler(
+      filename = function() {
+        paste0("KIRHub_submission_check_", Sys.Date(), ".txt")
+      },
+      content = function(file) {
+        writeLines(c(
+          paste("File:", fname),
+          paste("Checked:", Sys.time()),
+          "",
+          if (length(issues) == 0)
+            "PASSED: No issues found."
+          else
+            c("FAILED:", paste0("- ", issues))
+        ), file)
+      }
+    )
   })
   
   # Reactive values to keep track of which app is active
