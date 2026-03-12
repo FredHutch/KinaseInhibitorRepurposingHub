@@ -13,7 +13,7 @@ CITATION_TEXT <- "Saifudeen et al., 2026. Comprehensive Profiling of Clinically 
 
 CITATION_HTML <- "
 Saifudeen <i>et&nbsp;al.</i>, 2026.
-<i>Comprehensive profiling of clinically approved kinase inhibitors reveals mutation-specific inhibitors and opportunities for drug repurposing.</i>
+<i>Comprehensive Profiling of Clinically Approved Kinase Inhibitors Reveals Mutation-specific Inhibitors and Opportunities for Drug Repurposing.</i>
 <i>Nature Biotechnology. Accepted. 2026</i>
 "
 
@@ -318,7 +318,7 @@ ui <- fluidPage(
             to explore the relationship between clinically-approved kinase inhibitors and their effects on 
             both wild-type and oncogenic kinase variants. The application is fully browser-based, 
             requiring no data uploads, ensuring ease of use and accessibility. 
-            Click on the logo on the top right to reach out regarding any questions or inquiries.<br><br>
+            Please cite the publication below for use of this tool.<br><br>
           "),
           style = "font-size: 18px; color: black;"
         )
