@@ -9,12 +9,12 @@ library(plotly)
 library(shinyjs)
 library(jsonlite)
 
-CITATION_TEXT <- "Saifudeen et al., 2026. Comprehensive Profiling of Clinical Kinase Inhibitors Reveals Opportunities for Drug Repurposing and Uncovering New Biology. Nat Biotech. Accepted. 2026."
+CITATION_TEXT <- "Saifudeen et al., 2026. Comprehensive Profiling of Clinically Approved Kinase Inhibitors Reveals Mutation-specific Inhibitors and Opportunities for Drug Repurposing. Nature Biotechnology. Accepted. 2026."
 
 CITATION_HTML <- "
 Saifudeen <i>et&nbsp;al.</i>, 2026.
-<i>Comprehensive Profiling of Clinical Kinase Inhibitors Reveals Opportunities for Drug Repurposing and Uncovering New Biology.</i>
-<i>Nat Biotech. Accepted. 2026</i>
+<i>Comprehensive profiling of clinically approved kinase inhibitors reveals mutation-specific inhibitors and opportunities for drug repurposing.</i>
+<i>Nature Biotechnology. Accepted. 2026</i>
 "
 
 citation_block <- function(button_id, homepage = FALSE) {
