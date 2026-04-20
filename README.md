@@ -1,5 +1,5 @@
 # KinaseInhibitorRepurposingHub
 Kinase Inhibitor Repurposing Hub - Gujral Lab 2024
 
-Please cite the following publication for use of this tool:
-Saifudeen et al., 2026. Comprehensive Profiling of Clinically Approved Kinase Inhibitors Reveals Mutation-specific Inhibitors and Opportunities for Drug Repurposing. Nature Biotechnology. Accepted. 2026
+Cite this article
+Saifudeen, M., Zhu, S., Liang, S. et al. Comprehensive profiling of clinically approved kinase inhibitors reveals mutation-specific inhibitors and opportunities for drug repurposing. Nat Biotechnol (2026). https://doi.org/10.1038/s41587-026-03090-8
