@@ -9,19 +9,19 @@ library(plotly)
 library(shinyjs)
 library(jsonlite)
 
-CITATION_TEXT <- "Saifudeen et al., 2026. Comprehensive Profiling of Clinically Approved Kinase Inhibitors Reveals Mutation-specific Inhibitors and Opportunities for Drug Repurposing. Nature Biotechnology. Accepted. 2026."
-
+CITATION_TEXT <- "Saifudeen, M., Zhu, S., Liang, S. et al. (2026). Comprehensive profiling of clinically approved kinase inhibitors reveals mutation-specific inhibitors and opportunities for drug repurposing. Nature Biotechnology. https://doi.org/10.1038/s41587-026-03090-8"
 CITATION_HTML <- "
-Saifudeen <i>et&nbsp;al.</i>, 2026.
-<i>Comprehensive Profiling of Clinically Approved Kinase Inhibitors Reveals Mutation-specific Inhibitors and Opportunities for Drug Repurposing.</i>
-<i>Nature Biotechnology. Accepted. 2026</i>
+Saifudeen, M., Zhu, S., Liang, S. <i>et&nbsp;al.</i> (2026).
+<i>Comprehensive profiling of clinically approved kinase inhibitors reveals mutation-specific inhibitors and opportunities for drug repurposing.</i>
+<i>Nature Biotechnology.</i>
+DOI: <a href='https://doi.org/10.1038/s41587-026-03090-8' target='_blank'>10.1038/s41587-026-03090-8</a>
 "
 
 citation_block <- function(button_id, homepage = FALSE) {
   tags$div(
     style = paste(
       "font-family: Arial, sans-serif;",
-      "font-size: 14px;",        # force everything inside
+      "font-size: 14px;",
       "color: #333;",
       if (homepage) "margin-bottom: 18px;" else "margin-top: 6px;"
     ),
@@ -31,15 +31,23 @@ citation_block <- function(button_id, homepage = FALSE) {
       style = "margin-bottom: 6px; line-height: 1.45;"
     ),
     
-    actionButton(
-      inputId = button_id,
-      label = "Copy citation",
-      icon = icon("copy"),
-      style = paste(
-        "font-size: 13px;",
-        "padding: 4px 10px;",
-        "margin-top: 2px;",
-        if (homepage) "margin-bottom: 18px;" else ""
+    tags$div(
+      style = "display: flex; gap: 8px; align-items: center;",
+      
+      actionButton(
+        inputId = button_id,
+        label = "Copy citation",
+        icon = icon("copy"),
+        style = "font-size: 13px; padding: 4px 10px;"
+      ),
+      
+      tags$a(
+        href = "https://www.nature.com/articles/s41587-026-03090-8",
+        target = "_blank",
+        class = "btn btn-primary",
+        style = "font-size: 13px; padding: 4px 10px;",
+        icon("external-link-alt"),
+        "View Paper in Nature Biotechnology"
       )
     )
   )
