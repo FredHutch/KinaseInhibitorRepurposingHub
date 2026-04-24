@@ -32,20 +32,37 @@ citation_block <- function(button_id, homepage = FALSE) {
     ),
     
     tags$div(
-      style = "display: flex; gap: 8px; align-items: center;",
+      style = "
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+    margin-top: 6px;
+  ",
       
       actionButton(
         inputId = button_id,
         label = "Copy citation",
         icon = icon("copy"),
-        style = "font-size: 13px; padding: 4px 10px;"
+        style = "
+      font-size: 13px;
+      padding: 4px 10px;
+      flex: 1 1 auto;
+      min-width: 140px;
+    "
       ),
       
       tags$a(
         href = "https://www.nature.com/articles/s41587-026-03090-8",
         target = "_blank",
         class = "btn btn-primary",
-        style = "font-size: 13px; padding: 4px 10px;",
+        style = "
+      font-size: 13px;
+      padding: 4px 10px;
+      flex: 1 1 auto;
+      min-width: 200px;
+      text-align: center;
+    ",
         icon("external-link-alt"),
         "View Paper in Nature Biotechnology"
       )
